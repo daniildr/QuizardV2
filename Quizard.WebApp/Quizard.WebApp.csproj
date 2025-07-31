@@ -1,0 +1,109 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.4" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
+        <PackageReference Include="Serilog.Sinks.BrowserConsole" Version="8.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Quizard.Core\Quizard.Core.csproj" />
+      <ProjectReference Include="..\Quizard.SignalR\Quizard.SignalR.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="wwwroot\favicon.ico">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Components\PlayerSelection.razor" />
+      <_ContentIncludedByDefault Remove="Components\RoundDisplay.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="wwwroot\css\blankLayout.css" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="wwwroot\appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Update="Components\PlayerInfoHeader.razor">
+        <DependentUpon>PlayerHeaderComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\LabelHeader.razor">
+        <DependentUpon>PlayerHeaderComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\PlayerСhoiceScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\RoundStatisticScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\ScenarioStatisticScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\PlayerChoiseButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\QuestionScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\QuestionButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\StatisticButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\VotingButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\ShopScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\ShopButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\FocusOnScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\ShopHeader.razor">
+        <DependentUpon>PlayerHeaderComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\ApplyingModifiers.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\PlayerRevealPlayer.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\AuctionScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\AuctionButtons.razor">
+        <DependentUpon>PlayerButtonsComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\PantomimeQuestionScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+      <Content Update="Components\PantomimeStubScreen.razor">
+        <DependentUpon>PlayerCentralScreenComponent.razor</DependentUpon>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\css\fonts\jura\" />
+    </ItemGroup>
+
+</Project>

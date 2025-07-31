@@ -1,0 +1,80 @@
+﻿@using Quizard.Core.Enums
+@using Quizard.WebApp.Services
+@inject GameService GameService
+
+@switch (GameService!.GameState)
+{
+    case GameState.WaitingForPlayers:
+        @if (!GameService.PlayerInitial)
+        {
+            <PlayerChoiseButtons RackId="@RackId"/>
+        }
+
+        break;
+
+    case GameState.Auction:
+        <AuctionButtons/>
+        break;
+
+    case GameState.QuestionPlaying:
+    case GameState.RevealShowing:
+    {
+        @switch (GameService.Round!.RoundTypeId)
+        {
+            case RoundTypeId.HotPotato:
+            {
+                @if (GameService.TargetPlayer!.Nickname == GameService.Nickname)
+                {
+                    <QuestionButtons/>
+                }
+            }
+                break;
+                
+            case RoundTypeId.Pantomime:
+            {
+                @if (GameService.TargetPlayer!.Nickname != GameService.Nickname)
+                {
+                    <QuestionButtons/>
+                }
+            }
+                break;
+
+            default:
+                <QuestionButtons/>
+                break;
+        }
+    }
+        break;
+
+    case GameState.ShowingStats:
+        <StatisticButtons/>
+        break;
+
+    case GameState.Voting:
+        <VotingButtons/>
+        break;
+
+    case GameState.Shop:
+        <ShopButtons/>
+        break;
+}
+
+@code {
+    [Parameter] public string RackId { get; set; } = null!;
+
+    protected override Task OnInitializedAsync()
+    {
+        GameService.OnChange += StateHasChanged;
+        return Task.CompletedTask;
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RackId))
+            return Task.CompletedTask;
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+} 

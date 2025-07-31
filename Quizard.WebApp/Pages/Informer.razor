@@ -1,0 +1,223 @@
+﻿@page "/Informer"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Options
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Serialization
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.SignalR
+@using Quizard.WebApp.Components
+@using Quizard.WebApp.Options
+@using Quizard.WebApp.Services
+@layout BlankLayout
+@inject ILogger<Informer> Logger
+@inject NavigationManager NavManager
+@inject ScenarioService ScenarioService
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="@_mirrorClass">
+    @switch (_state)
+    {
+        case GameState.Media:
+            <MediaPlayer Media="_media" OnMediaEnded="HandleMediaEnded"/>
+            break;
+
+        case GameState.RoundPlaying:
+            <InformerRoundPreview Round="_round"/>
+            break;
+
+        case GameState.QuestionPlaying:
+            <InformerQuestionDisplay Round="_round" Question="_question"/>
+            break;
+
+        case GameState.RevealShowing:
+            <RevealPlayer Reveal="_reveal" Winner="@_speedWinnerNickname" OnRevealEnded="HandleRevealEnded"/>
+            break;
+
+        case GameState.ShowingStats:
+            <RoundStatisticDisplay RoundStatistic="_roundStatistics"/>
+            break;
+        
+    
+        case GameState.ShowingScenarioStats:
+            <ScenarioStatisticDisplay 
+                ShowStats="_showScenarioStats" 
+                ScenarioStatistic="_scenarioStatistics"/>
+            break;
+
+        case GameState.Voting:
+        case GameState.NotStarted:
+        case GameState.WaitingForPlayers:
+        case GameState.WaitStats:
+        case GameState.Shop:
+        case GameState.ApplyingTargetModifiers:
+        case GameState.Finished:
+        case GameState.Pause:
+        case GameState.Auction:
+        default:
+            <Placeholder/>
+            break;
+    }
+</div>
+
+@code {
+    private string _mirrorClass = "";
+    
+    private GameState _state = GameState.NotStarted;
+    private GameTrigger _trigger;
+    private HubConnection? _hubConnection;
+
+    private Media? _media;
+    private Reveal? _reveal;
+    private Round? _round;
+    private Question? _question;
+    private RoundStatistic[]? _roundStatistics;
+    private bool _showScenarioStats;
+    private ScenarioStatistic[]? _scenarioStatistics;
+
+    private string? _speedWinnerNickname;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Клиент будет работать в режиме экрана информатора");
+
+        Logger.LogTrace("Выполняется подключение к хабу");
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .AddNewtonsoftJsonProtocol(options =>
+            {
+                options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy
+                    {
+                        ProcessDictionaryKeys = true,
+                        OverrideSpecifiedNames = false
+                    }
+                };
+                options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                options.PayloadSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
+            })
+            .WithAutomaticReconnect()
+            .Build();
+        
+        Logger.LogTrace("Подписка на получение игрового сценария");
+        _hubConnection.On<Scenario>(HubMethods.ReceiveGameScenario, async scenario =>
+        {
+            ScenarioService.Scenario ??= scenario;
+            
+            _showScenarioStats = scenario.ShowScenarioStatsOnFinish;
+
+            await InvokeAsync(StateHasChanged);
+        });
+        
+        Logger.LogTrace("Подписка на оповещение применения нецелевых модификаторов");
+        _hubConnection.On<ModifierType>(HubMethods.ModifierApplied, async modifier =>
+        {
+            switch (modifier)
+            {
+                case ModifierType.MirrorTrap:
+                    _mirrorClass = "mirror";
+                    break;
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на изменение стадии");
+        _hubConnection.On<GameState, GameTrigger>(HubMethods.GameStateChanged, async (gameState, gameTrigger) =>
+        {
+            await Task.Delay(400).ConfigureAwait(false);
+            _state = gameState;
+            _trigger = gameTrigger;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на требование показать медиа файл");
+        _hubConnection.On<Media>(HubMethods.ShowMedia, async media =>
+        {
+            _media = media;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на требование показать правильный ответ");
+        _hubConnection.On<Reveal>(HubMethods.ShowReveal, async reveal =>
+        {
+            _reveal = reveal;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на старт раунда");
+        _hubConnection.On<Round>(HubMethods.RoundStarted, async round =>
+        {
+            _roundStatistics = null;
+            _round = round;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на старт вопроса");
+        _hubConnection.On<Question>(HubMethods.QuestionStarted, async question =>
+        {
+            _question = question;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на победителя скоростного вопроса");
+        _hubConnection.On<string>(HubMethods.SpeedQuestionWinner, async winnerNickname =>
+        {
+            _speedWinnerNickname = winnerNickname;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на отображение статистики");
+        _hubConnection.On<RoundStatistic[]>(HubMethods.ShowStatistics, async roundStatistics =>
+        {
+            _mirrorClass = "";
+            _roundStatistics = roundStatistics;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на отображение статистики сценария");
+        _hubConnection.On<ScenarioStatistic[]>(HubMethods.ShowScenarioStatistics, async scenarioStatistic =>
+        {
+            _scenarioStatistics = scenarioStatistic;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписываемся на окончание сессии");
+        _hubConnection.On(HubMethods.ForceDisconnect, () =>
+        {
+            Logger.LogWarning("Игровая сессия принудительно завершена");
+            NavManager.NavigateTo("/", forceLoad: true);
+        });
+
+        await _hubConnection.StartAsync();
+
+        Logger.LogTrace("Клиент идентифицирует себя");
+        await _hubConnection!.SendAsync(nameof(GameHub.IdentifyInformer));
+    }
+
+    private async Task HandleMediaEnded()
+    {
+        Logger.LogTrace("Показ медиа завершен");
+        _media = null;
+
+        await _hubConnection!.SendAsync(nameof(GameHub.MediaEnded));
+    }
+
+    private async Task HandleRevealEnded()
+    {
+        Logger.LogTrace("Показ правильного ответа завершен");
+        _reveal = null;
+        _speedWinnerNickname = null;
+
+        await _hubConnection!.SendAsync(nameof(GameHub.RevealShowed));
+    }
+}

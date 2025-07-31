@@ -1,0 +1,59 @@
+﻿@using Quizard.Core.Entities
+
+@if (Reveal == null)
+{
+    <Placeholder/>
+}
+else
+{
+    @if (Reveal.Media != null)
+    {
+        <MediaPlayer Media="Reveal.Media" OnMediaEnded="OnRevealEndedInternal"/>
+        <div class="d-flex justify-content-center align-items-center vh-100" style="color: #e2f4c2;">
+            <h1>@Reveal.Text</h1>
+            <hr/>
+            @if (Winner != null)
+            {
+                <h1>Победитель - @Winner</h1>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-center align-items-center vh-100" style="color: #e2f4c2;">
+            <div class="p-3 text-center">
+                <h1>@Reveal.Text</h1>
+                <hr/>
+                @if (Winner != null)
+                {
+                    <h1>Победитель - @Winner</h1>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Reveal? Reveal { get; set; }
+    [Parameter] public string? Winner { get; set; }
+    [Parameter] public EventCallback OnRevealEnded { get; set; }
+    
+
+    private async Task OnRevealEndedInternal()
+    {
+        await OnRevealEnded.InvokeAsync(null);
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Reveal is null)
+            return;
+        StateHasChanged();
+        
+        if (Reveal.Media == null)
+        {
+            await Task.Delay(Reveal.Duration * 1_000);
+            await OnRevealEndedInternal();
+        }
+    }
+}

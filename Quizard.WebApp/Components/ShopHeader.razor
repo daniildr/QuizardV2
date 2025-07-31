@@ -1,0 +1,44 @@
+@using Quizard.WebApp.Services
+@inject GameService GameService
+
+
+<PlayerInfoHeader/>
+@if (Status == null)
+{
+    <div class="col text-center d-flex align-items-center justify-content-center">
+        <h1>@GameService.Scenario.Localization.ShopLabel</h1>
+    </div>
+}
+else
+{
+    <div class="col">
+        <div class="row text-center">
+            <div class="col">
+                <h1>@GameService.Scenario.Localization.ShopLabel</h1>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col">
+                <h1>@Status</h1>
+            </div>
+        </div>
+    </div>
+}
+<div class="col"></div>
+
+@code {
+    private string? Status { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        GameService.ShopStateFinish = false;
+        GameService.OnChange += HandleShopStatus;
+    }
+
+    private void HandleShopStatus()
+    {
+        Status = GameService.ShopStatus;
+
+        InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,187 @@
+﻿@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<QuestionScreen> Logger
+
+@if (GameService.GivenAnswer is not null)
+{
+    <div class="col p-3 text-center d-flex align-items-center justify-content-center @_smallQuestionTextClass">
+        <h6>@GameService.Scenario.Localization.WaitOtherPlayersLabel</h6>
+    </div>
+}
+else
+{
+    @if (GameService.Question?.Media is not null
+         && GameService.Question?.Media.Type == MediaType.Image
+         && GameService.Question?.Media.ShowOnPlayer == true)
+    {
+        <div class="col-6 p-3">
+            <MediaPlayer Media="GameService.Question.Media"/>
+        </div>
+        <div class="col-6">
+            <div class="row">
+                <div class="col-auto ms-auto question-timer position-relative" style="left: 10px;">
+                    <p>@_remainingSeconds</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col ps-5 pt-1 pe-5 @_smallQuestionTextClass">
+                    <p>@GameService.Question?.QuestionText</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="row">
+                <div class="col-auto ms-auto question-timer position-relative" style="left: 10px;">
+                    <p>@_remainingSeconds</p>
+                </div>
+            </div>
+            @if (GameService.Question?.Hints.Count > 0)
+            {
+                <div class="row position-relative">
+                    <div class="col-6 ps-5 pt-1 pe-5 text-center @_smallQuestionTextClass">
+                        <p>@GameService.Question?.QuestionText</p>
+                    </div>
+                    <div class="col-6 ps-5 pe-5 text-center">
+                        <div class="row">
+                            <div class="col question-hint-label">
+                                @GameService.Scenario.Localization.HintLabel:
+                            </div>
+                        </div>
+                        @foreach (var hint in Hint)
+                        {
+                            <div class="row pt-1 pe-1">
+                                <div class="col question-hint @_smallQuestionTextClass">
+                                    @hint.Text
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col ps-5 pt-1 pe-5 text-center @_smallQuestionTextClass">
+                        <p>@GameService.Question?.QuestionText</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private string _smallQuestionTextClass = "";
+    
+    private List<Hint> Hint { get; set; } = [];
+    private int _secondTrigger;
+    private int _thirdTrigger;
+    
+    private int _remainingSeconds;
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleGameServiceChanged;
+        GameService.OnChange += HandlePlayerAnswer;
+        GameService.OnChange += HandleCssModifiers;
+    }
+
+    private void HandleCssModifiers()
+    {
+        _smallQuestionTextClass = GameService.SmallText ? "question-small-text-modifier" : "";
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleGameServiceChanged()
+    {
+        if (GameService.Question != null)
+        {
+            if (GameService.Round!.RoundTypeId == RoundTypeId.Steps)
+            {
+                Logger.LogInformation("Состояние подсказок - {@H}", GameService.Question!.Hints);
+                Hint.Add(GameService.Question!.Hints.First());
+                var trigger = GameService.Question.QuestionTimeout / 3;
+                _secondTrigger = trigger;
+                _thirdTrigger = trigger * 2;
+            }
+            
+            StartTimer(GameService.Question.QuestionTimeout);
+            GameService.OnChange -= HandleGameServiceChanged;
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandlePlayerAnswer()
+    {
+        if (!GameService.AnswerAlreadyGiven) return;
+        if (_timer is null) return;
+
+        _timer.Stop();
+        _timer.Elapsed -= OnTimerElapsed;
+        _timer.Dispose();
+        _timer = null;
+        GameService.AnswerAlreadyGiven = false;
+    }
+
+    private void StartTimer(int seconds)
+    {
+        _remainingSeconds = seconds;
+        _timer?.Stop();
+        _timer?.Dispose();
+
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += OnTimerElapsed;
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void OnTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (_remainingSeconds <= 0)
+        {
+            Dispose();
+        }
+        else
+        {
+            if (GameService.Round!.RoundTypeId == RoundTypeId.Steps)
+            {
+                if (_remainingSeconds == _secondTrigger)
+                    UpdateHints(1);
+                
+                if (_remainingSeconds == _thirdTrigger)
+                    UpdateHints(2);
+            }
+            
+            _remainingSeconds--;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void Dispose()
+    {
+        if (_timer is null) return;
+
+        _timer.Stop();
+        _timer.Elapsed -= OnTimerElapsed;
+        _timer.Dispose();
+        _timer = null;
+    }
+
+    private void UpdateHints(int number = 1)
+    {
+        var hints = GameService.Question!.Hints.ToArray();
+        GameService.UsedHints.Add(hints[number]);
+        Hint.Add(hints[number]);
+        
+        InvokeAsync(StateHasChanged);
+    }
+}

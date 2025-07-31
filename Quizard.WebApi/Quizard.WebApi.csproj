@@ -1,0 +1,91 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Version>1.0.0</Version>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+        <Win32Icon>Resources\app.ico</Win32Icon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Remove="Resources\logo.png" />
+        <Resource Include="Resources\logo.png" />
+        <None Remove="Resources\app.ico" />
+        <Resource Include="Resources\app.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="9.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="NUlid" Version="1.7.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Quizard.Application.GameEngine\Quizard.Application.GameEngine.csproj" />
+      <ProjectReference Include="..\Quizard.Application.LicensingService\Quizard.Application.LicensingService.csproj" />
+      <ProjectReference Include="..\Quizard.Application.ScenarioService\Quizard.Application.ScenarioService.csproj" />
+      <ProjectReference Include="..\Quizard.Core\Quizard.Core.csproj" />
+      <ProjectReference Include="..\Quizard.Infrastructure.CacheManager\Quizard.Infrastructure.CacheManager.csproj" />
+      <ProjectReference Include="..\Quizard.Infrastructure.DataProvider\Quizard.Infrastructure.DataProvider.csproj" />
+      <ProjectReference Include="..\Quizard.SignalR\Quizard.SignalR.csproj" />
+      <ProjectReference Include="..\Quizard.WebApp\Quizard.WebApp.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\Image\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="Resources\app.ico" />
+      <Resource Include="Resources\logo.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="publish\web.config" />
+      <_ContentIncludedByDefault Remove="publish\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\BlazorDebugProxy\BrowserDebugHost.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\Quizard.WebApi.deps.json" />
+      <_ContentIncludedByDefault Remove="publish\Quizard.WebApi.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\Quizard.WebApi.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish\wwwroot\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\wwwroot\_framework\blazor.boot.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\web.config" />
+      <_ContentIncludedByDefault Remove="publish\publish\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\BlazorDebugProxy\BrowserDebugHost.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\Quizard.WebApi.deps.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\Quizard.WebApi.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\Quizard.WebApi.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\wwwroot\appsettings.json" />
+      <_ContentIncludedByDefault Remove="publish\publish\wwwroot\_framework\blazor.boot.json" />
+    </ItemGroup>
+
+</Project>

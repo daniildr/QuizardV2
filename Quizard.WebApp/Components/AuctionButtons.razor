@@ -1,0 +1,101 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<AuctionButtons> Logger
+
+<div class="row mt-3 player-buttons">
+    <div class="col-12">
+        <div class="row mb-2">
+            <div class="col @GetAuctionButtonCssClass(GameService.Scenario!.BasePointPrice, false)">
+                <div class="row h-100">
+                    <div class="col-3"></div>
+                    <div class="col-7 text-start p-4">
+                        <p
+                            data-key="Numpad1"
+                            @onclick="() => MakeBet(GameService.Scenario!.BasePointPrice)"
+                            class="system-button-label mb-0">@GameService.Scenario.Localization.BidButtonLabel @GameService.Scenario!.BasePointPrice</p>
+                    </div>
+                    <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                        <img src="css/assets/button-icons/arrow-up.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                </div>
+            </div>
+            <div class="col @GetAuctionButtonCssClass(GameService.Scenario!.BasePointPrice * 2, true)">
+                <div class="row h-100">
+                    <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                        <img src="css/assets/button-icons/circle.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                    <div class="col-9 text-start p-4">
+                        <p
+                            data-key="Numpad3"
+                            @onclick="() => MakeBet(GameService.Scenario!.BasePointPrice * 2)"
+                            class="system-button-label mb-0">@GameService.Scenario.Localization.BidButtonLabel @(GameService.Scenario!.BasePointPrice * 2)</p>
+                    </div>
+                    <div class="col-1"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col @GetAuctionButtonCssClass(GameService.Scenario!.BasePointPrice * 3, false)">
+                <div class="row h-100">
+                    <div class="col-3"></div>
+                    <div class="col-7 text-start p-4">
+                        <p
+                            data-key="Numpad2"
+                            @onclick="() => MakeBet(GameService.Scenario!.BasePointPrice * 3)"
+                            class="system-button-label mb-0">@GameService.Scenario.Localization.BidButtonLabel @(GameService.Scenario!.BasePointPrice * 3)</p>
+                    </div>
+                    <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                        <img src="css/assets/button-icons/arrow-down.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                </div>
+            </div>
+            <div class="col @GetAuctionButtonCssClass(GameService.Scenario!.BasePointPrice * 4, true)">
+                <div class="row h-100">
+                    <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                        <img src="css/assets/button-icons/plus.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                    <div class="col-9 text-start p-4">
+                        <p
+                            data-key="Numpad4"
+                            @onclick="() => MakeBet(GameService.Scenario!.BasePointPrice * 4)"
+                            class="system-button-label mb-0">@GameService.Scenario.Localization.BidButtonLabel @(GameService.Scenario!.BasePointPrice * 4)</p>
+                    </div>
+                    <div class="col-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private async Task MakeBet(int bet)
+    {
+        GameService.PlayerBet = bet;
+
+        await GameService.HubConnection.SendAsync(nameof(GameHub.PlayerMakeBet));
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetAuctionButtonCssClass(int bet, bool right, bool skip = false)
+    {
+        var btnClass = right ? "question-btn-4-right" : "question-btn-4-left";
+        if (GameService.PlayerBet.HasValue)
+        {
+            if (GameService.PlayerBet.Value == bet)
+            {
+                btnClass += right ? " question-btn-4-right-chosen" : " question-btn-4-left-chosen";
+            }
+        }
+
+        if (skip)
+        {
+            btnClass += " question-btn-4-right-chosen";
+        }
+
+        return btnClass;
+    }
+
+}

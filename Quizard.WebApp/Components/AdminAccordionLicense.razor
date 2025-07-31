@@ -1,0 +1,91 @@
+﻿@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.Core.Models.Responses
+@using Quizard.WebApp.Options
+@inject HttpClient Http
+@inject ILogger<AdminAccordionLicense> Logger
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="accordion-item">
+    <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+            Upload license
+        </button>
+    </h2>
+    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+            <div class="container mt-4">
+                <!-- 1. Получить соль -->
+                <div class="mb-3 row align-items-center">
+                    <div class="col-auto">
+                        <button class="btn btn-secondary" @onclick="GetSalt">Get the license secret</button>
+                    </div>
+                    <div class="col">
+                        <span class="form-control-plaintext">@(_salt ?? "---")</span>
+                    </div>
+                </div>
+
+                <!-- 2. Активация лицензии -->
+                <div class="mb-3 row">
+                    <label class="col-sm-2 col-form-label">License</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" @bind="_licenseKey" placeholder="Enter your license key"/>
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary" @onclick="() => SubmitLicense(_licenseKey)">
+                            Activate
+                        </button>
+                    </div>
+                    <div class="@_resultClass">
+                        <p>@_result</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _salt;
+    private string _licenseKey = string.Empty;
+    private string _result = string.Empty;
+    private string _resultClass = "col-sm-4 ";
+    
+    private async Task GetSalt()
+    {
+        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/salt");
+        _salt = await response.Content.ReadAsStringAsync();
+
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task SubmitLicense(string licenseKey)
+    {
+        try
+        {
+            var uploadLicenseDto = new UploadLicenseDto
+            {
+                LicenseKey = licenseKey
+            };
+            
+            var created = (await Http
+                    .PostAsJsonAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/upload", uploadLicenseDto)).Content
+                .ReadFromJsonAsync<License>();
+
+            var result = $"License activated: ID = {created.Id}";
+            Logger.LogInformation("Лицензия создана: ID = {Id}", created.Id);
+            _result = result;
+            _resultClass = "col-sm-4 text-success";
+        }
+        catch (Exception ex)
+        {
+            var result = $"HTTP error: {ex}";
+            Logger.LogError("HTTP ошибка: {@Ex}", ex);
+            _result = result;
+            _resultClass = "col-sm-4 text-danger";
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+}

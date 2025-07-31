@@ -1,0 +1,54 @@
+﻿@using Quizard.WebApp.Services
+@inject GameService GameService
+
+<div class="col-12 p-5">
+    <div class="row text-start">
+        <div class="col-3"></div>
+        <div class="col-3">
+            @foreach (var player in GameService!.PlayersList)
+            {
+                <div class="row">
+                    <div class="col">
+                        @if (GameService.Nickname == player)
+                        {
+                            <h4>@player >></h4>
+                        }
+                        else
+                        {
+                            <h5>@player</h5>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-4">
+            <div class="row">
+                <div class="col p-4 choose-player-modal">
+                    <div class="row">
+                        <div class="col pt-4 pb-4">
+                            <h4>@GameService.Scenario.Localization.PlayerLabel: @GameService.Nickname</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <h5>@GameService.Scenario.Localization.ButtonConfirm</h5>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col" style="text-transform: uppercase;">
+                            <h5>@GameService.Scenario.Localization.ButtonCancel</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+    }
+}

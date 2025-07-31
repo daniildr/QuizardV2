@@ -1,0 +1,260 @@
+﻿@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.Core.Models.Requests
+@using Quizard.Core.Models.Responses
+@using Quizard.WebApp.Options
+@inject HttpClient Http
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                        aria-expanded="false" aria-controls="collapseOne">
+                    Start a new game session
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <div class="border rounded border-warning mb-4">
+                        <p class="text-center">
+                            It is possible to connect to the game hub only after starting a new game session
+                        </p>
+                    </div>
+                    <div class="row m-2">
+                        <div class="col-md-6">
+                            <h5>1. Select a scenario</h5>
+                            @if (Scenarios is null) { <p>Loading...</p> }
+                            else if (!Scenarios.Any()) { <p>No scripts available.</p> }
+                            else
+                            {
+                                <ul class="list-group">
+                                    @foreach (var s in Scenarios)
+                                    {
+                                        var isSelected = _selectedScenario?.Id == s.Id;
+                                        <li class="list-group-item d-flex justify-content-between align-items-start
+                                @(isSelected ? "active text-white" : "cursor-pointer")"
+                                            @onclick="() => SelectScenario(s)">
+                                            <div class="col-6">
+                                                <div>
+                                                    <strong>@s.Name</strong>
+                                                </div>
+                                                <div>
+                                                    <small>Duration: @s.GameDuration m.</small>
+                                                </div>
+                                                <div>
+                                                    <small>Stages: @s.Stages.Count </small>
+                                                </div>
+                                                <div>
+                                                    <small>Id: @s.Id </small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div>
+                                                    <strong>Description:</strong>
+                                                </div>
+                                                <div>
+                                                    <small>@s.Description</small>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>2. Enter the players nicknames</h5>
+                            @if (_selectedScenario is null) 
+                            { <p class="text-muted">First select the scenario on the left.</p> }
+                            else
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Scenario selected:</label>
+                                    <div class="alert alert-info">
+                                        <strong>@_selectedScenario.Name</strong>
+                                    </div>
+                                </div>
+
+                                @* Итерация по списку никнеймов *@
+                                @for (var i = 0; i < _playerNicknames.Count; i++)
+                                {
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">Player @(i + 1):</span>
+
+                                        @{
+                                            var i1 = i;
+                                        }
+                                        <input class="form-control"
+                                               @bind="_playerNicknames[i1]"
+                                               placeholder="Player nickname"/>
+                                        @if (i >= 2)
+                                        {
+                                            var i2 = i;
+                                            <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    @onclick="() => RemovePlayer(i2)"
+                                                    title="Remove player">
+                                                &minus;
+                                            </button>
+                                        }
+                                    </div>
+                                }
+
+                                <button type="button"
+                                        class="btn btn-outline-primary mb-3"
+                                        @onclick="AddPlayer"
+                                        disabled="@(_playerNicknames.Count >= 6)">
+                                    + Add player
+                                </button>
+
+                                <br/>
+                                <button class="btn btn-success"
+                                        @onclick="StartGame"
+                                        disabled="@(_isStarting || _playerNicknames.All(string.IsNullOrWhiteSpace))">
+                                    @if (_isStarting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status"
+                                              aria-hidden="true"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Run game</span>
+                                    }
+                                </button>
+
+                                @if (!string.IsNullOrEmpty(_startMessage))
+                                {
+                                    <div class="mt-3 alert @(_startError ? "alert-danger" : "alert-success")">
+                                        @_startMessage
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@code {
+    [Parameter] public Scenario[]? Scenarios { get; set; }
+    [Parameter] public EventCallback GetSessionStatus { get; set; }
+    [Parameter] public EventCallback ConnectToHub { get; set; }
+    
+    
+    private Scenario? _selectedScenario;
+    private readonly List<string> _playerNicknames = [string.Empty, string.Empty];
+    
+    private bool _isStarting;
+    private bool _startError;
+    private string _startMessage = string.Empty;
+    
+    protected override Task OnParametersSetAsync()
+    {
+        if (Scenarios is null)
+            return Task.CompletedTask;
+        
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+    
+    private async Task StartGame()
+    {
+        if (_selectedScenario is null) return;
+
+        _isStarting = true;
+        _startMessage = string.Empty;
+
+        var players = _playerNicknames
+            .Select(nickname => new PlayerDto { Nickname = nickname })
+            .ToArray();
+
+        var request = new GameStartRequestDto
+        {
+            ScenarioId = _selectedScenario.Id,
+            Players = players
+        };
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync(
+                $"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/start", request);
+
+            switch ((int)response.StatusCode)
+            {
+                case 201:
+                    var gameId = await response.Content.ReadAsStringAsync();
+                    _startError = false;
+                    _startMessage = $"The game has started! GameId = {gameId}";
+                    
+                    await GetSessionStatus.InvokeAsync(null);
+                    await ConnectToHub.InvokeAsync(null);
+                    break;
+                case 400:
+                    _startError = true;
+                    _startMessage = "400 Bad Request: Check the passed parameters.";
+                    break;
+                case 401:
+                    _startError = true;
+                    _startMessage = "401 Unauthorized: Licensing error.";
+                    break;
+                case 403:
+                    _startError = true;
+                    _startMessage = "403 Forbidden: License level does not allow.";
+                    break;
+                case 409:
+                    _startError = true;
+                    _startMessage = "409 Conflict: The game is already running.";
+                    break;
+                case 429:
+                    _startError = true;
+                    _startMessage = "429 Too Many Requests: Request limit exceeded.";
+                    break;
+                case 500:
+                    _startError = true;
+                    _startMessage = "500 Internal Server Error.";
+                    break;
+                case 503:
+                    _startError = true;
+                    _startMessage = "503 Service Unavailable.";
+                    break;
+                default:
+                    _startError = true;
+                    var txt = await response.Content.ReadAsStringAsync();
+                    _startMessage = $"{(int)response.StatusCode} {response.ReasonPhrase}: {txt}";
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _startError = true;
+            _startMessage = $"Error at startup: {ex.Message}";
+        }
+        finally
+        {
+            _isStarting = false;
+        }
+    }
+    
+    private void SelectScenario(Scenario s)
+    {
+        _selectedScenario = s;
+        _startMessage = string.Empty;
+    }
+    
+    private void RemovePlayer(int index)
+    {
+        if (index >= 2 && index < _playerNicknames.Count)
+        {
+            _playerNicknames.RemoveAt(index);
+        }
+    }
+    
+    private void AddPlayer()
+    {
+        if (_playerNicknames.Count < 6)
+        {
+            _playerNicknames.Add(string.Empty);
+        }
+    }
+}

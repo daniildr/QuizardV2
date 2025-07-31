@@ -1,0 +1,175 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<QuestionButtons> Logger
+
+@if (RoundsForVoting != null)
+{
+    <div class="row mt-2 player-buttons">
+        <div class="col-12">
+            <div class="row mb-2">
+                <div class="col @GetButtonCssClass(RoundsForVoting[0].Name, false)">
+                    <div class="row h-100">
+                        <div class="col-1"></div>
+                        <div
+                            data-key="Numpad1"
+                            @onclick="() => SelectRound(RoundsForVoting[0])"
+                            class="col-auto text-start text-break vstack justify-content-center @GetRoundCssClass(RoundsForVoting[0].Name)">
+                            @ProcessText(RoundsForVoting[0].Name)
+                        </div>
+                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                            <img src="css/assets/button-icons/arrow-up.svg" width="99" height="99" alt="Внимание">
+                        </div>
+                    </div>
+                </div>
+                
+                @if (RoundsForVoting.Length > 1)
+                {
+                    <div class="col @GetButtonCssClass(RoundsForVoting[1].Name, true)">
+                        <div class="row h-100">
+                            <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                <img src="css/assets/button-icons/circle.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                            <div
+                                data-key="Numpad2"
+                                @onclick="() => SelectRound(RoundsForVoting[1])"
+                                class="col-auto text-start text-break vstack justify-content-center @GetRoundCssClass(RoundsForVoting[1].Name)">
+                                @ProcessText(RoundsForVoting[1].Name)
+                            </div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col question-btn-4-right">
+                        <div class="row h-100">
+                            <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                <img src="css/assets/button-icons/circle.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                            <div class="col-auto text-start text-break vstack justify-content-center question-text"></div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="row mb-2">
+                @if (RoundsForVoting.Length > 2)
+                {
+                    <div class="col @GetButtonCssClass(RoundsForVoting[2].Name, false)">
+                        <div class="row h-100">
+                            <div class="col-1"></div>
+                            <div
+                                data-key="Numpad3"
+                                @onclick="() => SelectRound(RoundsForVoting[2])"
+                                class="col-auto text-start text-break vstack justify-content-center @GetRoundCssClass(RoundsForVoting[2].Name)">
+                                @ProcessText(RoundsForVoting[2].Name)
+                            </div>
+                            <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                <img src="css/assets/button-icons/arrow-down.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col question-btn-4-left">
+                        <div class="row h-100">
+                            <div class="col-1"></div>
+                            <div
+                                class="col-auto text-start text-break vstack justify-content-center question-text"></div>
+                            <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                <img src="css/assets/button-icons/arrow-down.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @if (RoundsForVoting.Length > 3)
+                {
+                    <div class="col @GetButtonCssClass(RoundsForVoting[3].Name, true)">
+                        <div class="row h-100">
+                            <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                <img src="css/assets/button-icons/plus.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                            <div
+                                data-key="Numpad4"
+                                @onclick="() => SelectRound(RoundsForVoting[3])"
+                                class="col-auto text-start text-break vstack justify-content-center @GetRoundCssClass(RoundsForVoting[3].Name)">
+                                @ProcessText(RoundsForVoting[3].Name)
+                            </div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="col question-btn-4-right">
+                        <div class="row h-100">
+                            <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                <img src="css/assets/button-icons/plus.svg" width="99" height="99" alt="Внимание">
+                            </div>
+                            <div
+                                class="col-auto text-start text-break vstack justify-content-center question-text">• @GameService.Scenario.Localization.ButtonStub</div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Round[]? RoundsForVoting { get; set; }
+    
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += HandleGameServiceChanged;
+    }
+
+    private void HandleGameServiceChanged()
+    {
+        if (GameService.RoundsForVoting != null)
+        {
+            RoundsForVoting = GameService.RoundsForVoting.ToArray();
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task SelectRound(Round round)
+    {
+        GameService.ChosenRound = round;
+        if (GameService.Bag.Contains(ModifierType.ExtraVotes))
+        {
+            await GameService.HubConnection.SendAsync(nameof(GameHub.SubmitPlayerVoteChoice), round.RoundId, 7);
+            GameService.RemoveItemInBag(ModifierType.ExtraVotes);
+        }
+        else
+        {
+            await GameService.HubConnection.SendAsync(nameof(GameHub.SubmitPlayerVoteChoice), round.RoundId, 1);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetButtonCssClass(string? roundName, bool right)
+    {
+        var btnClass = right ? "question-btn-4-right" : "question-btn-4-left";
+        if (GameService.ChosenRound is not null && GameService.ChosenRound.Name == roundName)
+        {
+            btnClass += right ? " question-btn-4-right-correct" : " question-btn-4-left-correct";
+        }
+
+        return btnClass;
+    }
+
+    private static string ProcessText(string? roundName) => $"• {roundName}";
+
+    private static string GetRoundCssClass(string? roundName) => 
+        roundName?.Length > 90 ? "question-text question-text-small" : "question-text";
+}

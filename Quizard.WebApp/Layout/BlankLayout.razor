@@ -1,0 +1,33 @@
+﻿@using Quizard.Core.Enums
+@using Quizard.WebApp.Services
+@inherits LayoutComponentBase
+@inject GameService GameService
+
+<link rel="stylesheet" href="css/blankLayout.css"/>
+<div class="app-viewport @_modifierClass">
+    <div class="app-center">
+        @Body
+    </div>
+</div>
+
+@code {
+    private string _modifierClass = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleModifierChanged;
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleModifierChanged()
+    {
+        if (GameService.BrightScreen)
+            _modifierClass = !GameService.Bag.Contains(ModifierType.BrightInterface) 
+                ? "app-viewport-bright" 
+                : "";
+        else
+            _modifierClass = "";
+    }
+}

@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<QuestionButtons> Logger
+
+<!-- Две кнопки -->
+<div class="row mt-5 player-buttons">
+    <div class="col-12">
+        <div class="row mt-5 mb-2">
+            <div class="col question-btn-4-left">
+                <div class="row h-100">
+                    <div class="col-1"></div>
+                    <div
+                        @onclick="SendStatus"
+                        data-key="Numpad1"
+                        class="col-auto text-start text-break vstack justify-content-center question-text question-text-big">• @GameService.Scenario.Localization.ButtonStub</div>
+                    <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                        <img src="css/assets/button-icons/pedal-left.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                </div>
+            </div>
+            <div class="col question-btn-4-right @(_playerReady ? "question-btn-4-right-chosen" : "")">
+                <div class="row h-100">
+                    <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                        <img src="css/assets/button-icons/pedal-right.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                    <div 
+                        @onclick="SendStatus"
+                        data-key="Numpad2"
+                        class="col-auto text-start text-break vstack justify-content-center question-text question-text-big">• @GameService.Scenario.Localization.ButtonContinue</div>
+                    <div class="col-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _playerReady;
+    
+    protected override void OnInitialized()
+    {
+        _playerReady = false;
+        GameService.OnChange += StateHasChanged;
+    }
+    
+    private async Task SendStatus()
+    {
+        GameService.RoundStatistics = null;
+        _playerReady = true;
+        await GameService.HubConnection.SendAsync(nameof(GameHub.StatsDisplayed));
+
+        await InvokeAsync(StateHasChanged);
+    }
+}

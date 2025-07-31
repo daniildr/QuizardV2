@@ -1,0 +1,23 @@
+﻿@using Quizard.WebApp.Services
+@inject GameService GameService
+
+<div class="col">
+    <div class="row text-center">
+        <div class="col player-h1">
+            <h1><b>@GameService.Scenario.Localization.PlayerLabel:</b> @GameService?.Nickname</h1>
+        </div>
+    </div>
+    <div class="row text-center">
+        <div class="col player-h1">
+            <h1><b>@GameService.Scenario.Localization.ScoreLabel:</b> @GameService?.Score</h1>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        GameService.OnChange += StateHasChanged;
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,80 @@
+@using Quizard.Core.Enums
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<QuestionScreen> Logger
+
+<div class="col-12 position-relative">
+    <div class="row m-5 text-start">
+        <div class="col-1 shop-col"></div>
+        <div class="col-5 shop-col">
+            @foreach (var modifierType in _internalBag)
+            {
+                <div class="row">
+                    <div class="col">
+                        @if (GameService.ChosenModifier == modifierType)
+                        {
+                            <h4>@GameService.ShopBackUp!.First(s => s.ModifierType == modifierType).Name >></h4>
+                        }
+                        else
+                        {
+                            <h5>@GameService.ShopBackUp!.First(s => s.ModifierType == modifierType).Name</h5>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-5">
+            <div class="row">
+                <div class="col p-4 shop-info position-relative">
+                    <div class="row mb-5">
+                        <div class="col shop-info-header">@GameService.ShopBackUp!.First(s => s.ModifierType == GameService.ChosenModifier).Name:</div>
+                    </div>
+                    <div class="row shop-item-info-col">
+                        <div class="col text-break">
+                            @GameService.ShopBackUp!.First(s => s.ModifierType == GameService.ChosenModifier).Description
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="row position-absolute bottom-0 end-0 me-4 shop-buttons">
+                                <div class="col-auto mb-0">
+                                    <p>Применить</p>
+                                    <p>ОТМЕНА</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-1"></div>
+    </div>
+</div>
+
+@code {
+    private List<ModifierType> _internalBag { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        if (GameService.Bag.Count > 0)
+        {
+            _internalBag = GameService.Bag.ToList();
+            GameService.ChosenModifier = GameService.Bag.First();
+        }
+        
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleBag;
+    }
+
+    private void HandleBag()
+    {
+        if (GameService.Bag.Count > 0)
+        {
+            _internalBag = GameService.Bag.ToList();
+            GameService.ChosenModifier = GameService.Bag.First();
+        }
+        
+        InvokeAsync(StateHasChanged);
+        
+    }
+}

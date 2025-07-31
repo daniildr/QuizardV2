@@ -1,0 +1,39 @@
+﻿@using Quizard.Core.Entities
+
+@if ((bool)Round?.RoundType?.DisplayQuestionOnInformator)
+{
+    @if (Question?.Media != null)
+    {
+        <MediaPlayer Media="Question.Media"/>
+        <div class="position-absolute bottom-0 bg-dark bg-opacity-50" style="color: #e2f4c2;">
+            @Question.QuestionText
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-center align-items-center vh-100" style="color: #e2f4c2;">
+            <div class="p-3 text-center">
+                <h1>@Question?.QuestionText</h1>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <InformerRoundPreview Round="Round"/>
+}
+
+
+@code {
+    [Parameter] public Question? Question { get; set; }
+    [Parameter] public Round? Round { get; set; }
+    
+    protected override Task OnParametersSetAsync()
+    {
+        if (Question is null || Round is null)
+            return Task.CompletedTask;
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

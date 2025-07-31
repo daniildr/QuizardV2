@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Options
+@using Quizard.SignalR
+@using Quizard.WebApp.Options
+@inject HttpClient Http
+@inject ILogger<AdminSessionControl> Logger
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="row m-2">
+    <div class="col-6">
+        <div class="row align-items-baseline">
+            <div class="col-4 text-start me-3">
+                <p>Game session state: </p></div>
+            <div
+                class="col text-center me-3 btn border rounded @GameSessionStatusClass">
+                @GameSessionStatus
+            </div>
+        </div>
+        <div class="row align-items-baseline mt-4 mb-4">
+            <div class="col-auto text-start m-auto">
+                <button class="btn btn-success" @onclick="ResumeGame">
+                    Resume
+                </button>
+            </div>
+            <div class="col-auto text-start m-auto">
+                <button class="btn btn-primary" @onclick="Skip">
+                    Skip
+                </button>
+            </div>
+            <div class="col-auto text-start m-auto" @onclick="StopGame">
+                <button class="btn btn-danger">
+                    Stop
+                </button>
+            </div>
+            <div class="col-auto text-start m-auto" @onclick="StopAllGames">
+                <button class="btn btn-warning">
+                    Stop All Games
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="row align-items-baseline">
+            <label for="logBox" class="form-label">Hub log:</label>
+            <div id="logBox"
+                 class="border rounded p-2 bg-light"
+                 style="height: 150px; overflow-y: auto; white-space: pre-wrap;">
+                @foreach (var msg in Log)
+                {
+                    <div>@msg</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string GameSessionStatus { get; set; } = " ";
+    [Parameter] public string GameSessionStatusClass { get; set; } = " ";
+    [Parameter] public List<string> Log { get; set; } = [];
+
+    [Parameter] public HubConnection HubConnection { get; set; } = null!;
+    
+    private async Task ResumeGame()
+    {
+        Logger.LogInformation("Вызываем - {Method}", nameof(GameHub.ResumeGame));
+        await HubConnection.SendAsync(nameof(GameHub.ResumeGame));
+    }
+
+    private async Task Skip()
+    {
+        Logger.LogInformation("Вызываем - {Method}", nameof(GameHub.SkipStage));
+        await HubConnection.SendAsync(nameof(GameHub.SkipStage));
+    }
+
+    private async Task StopGame()
+    {
+        Logger.LogInformation("Вызываем - {Method}", nameof(GameHub.StopGame));
+        await HubConnection.SendAsync(nameof(GameHub.StopGame));
+    }
+
+    private async Task StopAllGames()
+    {
+        Logger.LogInformation("Вызываем метод завершения всех запущенных игр");
+        try
+        {
+            await Http.DeleteAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSessions/stopAll");
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogCritical("Ошибка запроса - {@E}", ex);
+        }
+    }
+}

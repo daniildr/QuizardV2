@@ -1,0 +1,103 @@
+﻿@page "/"
+@using Microsoft.Extensions.Options
+@using Quizard.WebApp.Options
+@using Quizard.WebApp.Services
+@layout MainLayout
+@inject ILogger<Welcome> Logger
+@inject HeaderService HeaderSvc
+@inject NavigationManager NavManager
+@inject IOptions<RackIdOptions> RackOptions
+
+<PageTitle>Client initialization | Quizard</PageTitle>
+
+<div class="row mb-3">
+    <div class="col text-center">
+        <h3>Welcome!</h3>
+        <p>Select client operating mode:</p>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="GoToAdmPage">Admin Panel</button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="InformerConnect">Informant stand</button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId1)">
+            Game Stand No.1
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId2)">
+            Game Stand No.2
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId3)">
+            Game Stand No.3
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId4)">
+            Game Stand No.4
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId5)">
+            Game Stand No.5
+        </button>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col text-center">
+        <button class="btn btn-primary" @onclick="() => GoToPlayerPage(RackOptions.Value.RackId6)">
+            Game Stand No.6
+        </button>
+    </div>
+</div>
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        HeaderSvc.Header = "Client Initialization | Quizard";
+
+        await InvokeAsync(StateHasChanged);
+        await base.OnInitializedAsync();
+    }
+
+    Task InformerConnect()
+    {
+        Logger.LogTrace("Выполняется переход на страницу /informer");
+        NavManager.NavigateTo("/informer");
+        return Task.CompletedTask;
+    }
+
+    Task GoToPlayerPage(string rackId)
+    {
+        Logger.LogTrace("Выполняется переход на страницу /player");
+        NavManager.NavigateTo($"/player/{Uri.EscapeDataString(rackId)}");
+        return Task.CompletedTask;
+    }
+
+    Task GoToAdmPage()
+    {
+        Logger.LogTrace("Выполняется переход на страницу /admin");
+        NavManager.NavigateTo("/admin");
+        return Task.CompletedTask;
+    }
+
+}

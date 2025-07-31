@@ -1,0 +1,40 @@
+﻿/* 1) Сброс отступов и полная высота */
+html, body {
+    height: 100%;
+    margin: 0;
+    /* если хотите, чтобы при малом окне появлялся скролл */
+    overflow: auto;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url("assets/background.png") !important;
+    background-size: cover; /* по желанию */
+}
+
+/* Фиксированный «экран» 1920×1080 */
+.app-viewport {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    flex: 0 0 auto;
+    overflow: hidden; /* всё, что выходит за этот экран, будет обрезано */
+}
+
+.app-viewport-bright {
+    background-image: url("assets/bright-background.png") !important;
+    background-size: cover; /* по желанию */
+}
+
+/* контейнер 1700×950 по центру */
+.app-viewport .app-center {
+    width: 1700px;
+    height: 950px;
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}

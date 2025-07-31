@@ -1,0 +1,184 @@
+﻿@page "/Admin"
+@using System.Net
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Options
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Newtonsoft.Json.Serialization
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@using Quizard.WebApp.Components
+@using Quizard.WebApp.Options
+@layout MainLayout
+@inject HttpClient Http
+@inject ILogger<Admin> Logger
+@inject HeaderService HeaderSvc
+@inject IOptions<BackendOptions> BackendOptions
+
+<AdminLicenseInfo/>
+<hr/>
+<AdminConnectionInfo 
+    ConnectionId="@_connectionId" 
+    HubConnectionClass="@_hubConnectionClass" 
+    ApiConnectionClass="@_apiConnectionClass"
+    WwwrootFolder="@_wwwrootFolder"/>
+<hr/>
+<AdminSessionControl 
+    Log="_log"
+    HubConnection="_hubConnection"
+    GameSessionStatus="@_gameSessionStatus" 
+    GameSessionStatusClass="@_gameSessionStatusClass" />
+<hr/>
+<div class="row m-2">
+    <div class="accordion" id="accordionExample">
+        <AdminAccordionStartGame 
+            ConnectToHub="ConnectToHub" GetSessionStatus="GetSessionStatus" Scenarios="_scenarios"/>
+        <AdminAccordionGameState GameState="_currentState"/>
+        <AdminAccordionUploadScenario/>
+        <AdminAccordionLicense/>
+    </div>
+</div>
+
+@code {
+    private GameState _currentState = GameState.NotStarted;
+    
+    private readonly List<string> _log = [];
+    
+    private HubConnection _hubConnection = null!;
+    private string _connectionId = "NOT CONNECTED";
+    private string _hubConnectionClass = "border-danger";
+    private string _apiConnectionClass = "border-danger";
+    private string _gameSessionStatus = " ";
+    private string _gameSessionStatusClass = " ";
+    
+    private Scenario[]? _scenarios;
+
+    private string _wwwrootFolder = "NOT CONNECTED";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        HeaderSvc.Header = "Admin Panel | Quizard";
+        await GetSessionStatus();
+
+        await GetScenarios();
+        await GetWwwrootFolder();
+        await InvokeAsync(StateHasChanged);
+        await base.OnInitializedAsync();
+    }
+    
+    private async Task ConnectToHub()
+    {
+        Logger.LogInformation("Клиент будет работать в режиме панели администратора");
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .AddNewtonsoftJsonProtocol(options =>
+            {
+                options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy
+                    {
+                        ProcessDictionaryKeys = true,
+                        OverrideSpecifiedNames = false
+                    }
+                };
+                options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                options.PayloadSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        Logger.LogTrace("Подписка на обновление статуса игры");
+        _hubConnection.On<GameState, GameTrigger>(HubMethods.GameStateChanged, async (state, trigger) =>
+        {
+            _currentState = state;
+            await GetSessionStatus();
+        });
+        
+        Logger.LogTrace("Подписка на лог SignalR");
+        _hubConnection.On<string, JToken>(HubMethods.Log, (eventName, payload) =>
+        {
+            var formatted = payload.ToString(Formatting.Indented);
+
+            _log.Add($"[{DateTime.Now:HH:mm:ss}] {eventName}: {formatted}");
+
+            InvokeAsync(StateHasChanged);
+        });
+        
+        Logger.LogTrace("Подписка на отключение сессии");
+        _hubConnection.On(HubMethods.ForceDisconnect, async () =>
+        {
+            await Task.Delay(500);
+            await GetSessionStatus();
+            await _hubConnection.StopAsync();
+            
+            _log.Clear();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+
+        if (_hubConnection.ConnectionId is not null)
+        {
+            _hubConnectionClass = "border-success";
+            _connectionId = _hubConnection.ConnectionId;
+
+            await _hubConnection.SendAsync(nameof(GameHub.IdentifyAdmin));
+        }
+    }
+    
+    private async Task<string> GetSessionStatus()
+    {
+        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/status");
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _gameSessionStatus = "The game session has not started yet.";
+            _currentState = GameState.NotStarted;
+            _gameSessionStatusClass = " ";
+
+            await InvokeAsync(StateHasChanged);
+            return _gameSessionStatus;
+        }
+
+        _gameSessionStatus = await response.Content.ReadAsStringAsync();
+        _currentState = Enum.Parse<GameState>(_gameSessionStatus);
+        if (_gameSessionStatus == "The game session has not started yet") return _gameSessionStatus;
+        _gameSessionStatusClass = _gameSessionStatus == nameof(GameState.NotStarted)
+            ? "border-warning"
+            : "border-success";
+
+        await InvokeAsync(StateHasChanged);
+        return _gameSessionStatus;
+    }
+
+    private async Task GetScenarios()
+    {
+        try
+        {
+            var json = await Http.GetStringAsync($"{BackendOptions.Value.BaseUrl}/api/v1/Scenarios");
+            _scenarios = JsonConvert.DeserializeObject<Scenario[]>(json);
+            _apiConnectionClass = "border-success";
+        }
+        catch (Exception e)
+        {
+            Logger.LogCritical("Loading scenario caused an error - {@E}", e);
+            _scenarios = [];
+        }
+    }
+
+    private async Task GetWwwrootFolder()
+    {
+        try
+        {
+            var wwwrootFolderPath = await Http.GetStringAsync($"{BackendOptions.Value.BaseUrl}/api/v1/Help/wwwroot-folder");
+            _wwwrootFolder = wwwrootFolderPath;
+            _apiConnectionClass = "border-success";
+        }
+        catch (Exception e)
+        {
+            Logger.LogCritical("Loading wwwroot folder caused an error - {@E}", e);
+            _wwwrootFolder = "NOT CONNECTED";
+        }
+    }
+}

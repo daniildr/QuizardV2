@@ -1,0 +1,37 @@
+﻿@using Quizard.Core.Entities
+
+@if (RoundStatistic == null)
+{
+    <Placeholder/>
+}
+else
+{
+    <div class="row m-2">
+        <div class="col-12 mb-4 d-flex justify-content-start">
+            <ul class="list-group list-group-flush w-100">
+                @foreach (var stat in RoundStatistic)
+                {
+                    <li
+                        class="list-group-item d-flex justify-content-between w-100"
+                        style="background-color:#2A2A2A; color:#e2f4c2;">
+                        <span>@stat.Player.Nickname</span>
+                        <span class="fw-bold">@stat.Score</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public RoundStatistic[]? RoundStatistic { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (RoundStatistic is null)
+            return Task.CompletedTask;
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

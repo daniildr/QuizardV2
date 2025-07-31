@@ -1,0 +1,133 @@
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<QuestionScreen> Logger
+
+@if (GameService.ShopStock is not null && GameService.CurrentShopItem is not null)
+{
+    <div class="col-12 position-relative">
+        <div class="row position-absolute top-0 end-0 g-0" style="right: 10px;">
+            <div class="col-auto question-timer"><p>@_remainingSeconds</p></div>
+        </div>
+        <div class="row m-5 text-start">
+            <div class="col-1 shop-col">
+                @foreach (var item in GameService.ShopStock)
+                {
+                    <div class="row">
+                        <div class="col">
+                            <h5>@item.Quantity</h5>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col-5 shop-col">
+                @foreach (var item in GameService.ShopStock)
+                {
+                    <div class="row">
+                        <div class="col">
+                            @if (GameService.CurrentShopItem.Name == item.Name)
+                            {
+                                <h4>@item.Name >></h4>
+                            }
+                            else
+                            {
+                                <h5>@item.Name</h5>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col-5">
+                <div class="row">
+                    <div class="col p-4 shop-info position-relative">
+                        <div class="row pb-0">
+                            <div class="col shop-info-header">@GameService.Scenario.Localization.PriceLabel @(GameService.CurrentShopItem.CostMultiplier * GameService.Scenario!.BasePointPrice)</div>
+                        </div>
+                        <div class="row mb-5">
+                            <div class="col shop-info-header">@GameService.CurrentShopItem.Name:</div>
+                        </div>
+                        <div class="row shop-item-info-col">
+                            <div class="col text-break">
+                                @GameService.CurrentShopItem.Description
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="row position-absolute bottom-0 end-0 me-4 shop-buttons">
+                                    <div class="col-auto mb-0">
+                                        <p>@GameService.Scenario.Localization.ButtonBuy</p>
+                                        <p style="text-transform: uppercase">@GameService.Scenario.Localization.ButtonCancel</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-1"></div>
+        </div>
+    </div>
+}
+
+@code {
+    private int _remainingSeconds;
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleShopDuration;
+        GameService.OnChange += HandlePlayerFinish;
+    }
+
+    private void HandleShopDuration()
+    {
+        if (GameService.ShopDuration != null)
+        {
+            StartTimer((int)GameService.ShopDuration);
+            GameService.OnChange -= HandleShopDuration;
+        }
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandlePlayerFinish()
+    {
+        if (GameService.ShopStateFinish) 
+            Dispose();
+    }
+
+    private void StartTimer(int seconds)
+    {
+        _remainingSeconds = seconds;
+        _timer?.Stop();
+        _timer?.Dispose();
+
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += OnTimerElapsed;
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+    
+    private void OnTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (_remainingSeconds <= 0)
+        {
+            Dispose();
+        }
+        else
+        {
+            _remainingSeconds--;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void Dispose()
+    {
+        if (_timer is null) return;
+        
+        _timer.Stop();
+        _timer.Elapsed -= OnTimerElapsed;
+        _timer.Dispose();
+        _timer = null;
+    }
+}

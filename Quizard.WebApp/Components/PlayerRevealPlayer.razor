@@ -1,0 +1,39 @@
+@using Quizard.WebApp.Services
+@inject GameService GameService
+
+@if (_speedWinner != null)
+{
+    @if (_speedWinner == GameService.Nickname)
+    {
+        <div class="col p-3 text-center d-flex align-items-center justify-content-center">
+            <h6>@GameService.Scenario.Localization.SpeedWinnerLabel</h6>
+        </div>
+    }
+    else
+    {
+        <FocusOnScreen/>
+    }
+}
+else
+{
+    <FocusOnScreen/>
+}
+
+@code {
+    private string? _speedWinner;
+
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleSpeedWinner;
+    }
+
+    private void HandleSpeedWinner()
+    {
+        if (GameService.SpeedWinnerNickname == null) return;
+
+        _speedWinner = GameService.SpeedWinnerNickname;
+        
+        InvokeAsync(StateHasChanged);
+    }
+}

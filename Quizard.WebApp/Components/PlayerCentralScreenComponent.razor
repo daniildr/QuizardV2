@@ -1,0 +1,145 @@
+﻿@using Quizard.Core.Enums
+@using Quizard.WebApp.Services
+@inject GameService GameService
+
+<div class="row question-field m-auto">
+    @switch (GameService!.GameState)
+    {
+        case GameState.WaitingForPlayers:
+            @if (GameService.PlayerInitial)
+            {
+                <div class="col p-3 text-center d-flex align-items-center justify-content-center">
+                    <h6>@GameService.Scenario.Localization.WaitOtherPlayersLabel</h6>
+                </div>
+            }
+            else
+            {
+                <PlayerСhoiceScreen/>
+            }
+
+            break;
+
+        case GameState.Auction:
+            <AuctionScreen/>
+            break;
+
+        case GameState.QuestionPlaying:
+        {
+            @switch (GameService.Round!.RoundTypeId)
+            {
+                case RoundTypeId.HotPotato:
+                {
+                    @if (GameService.TargetPlayer!.Nickname == GameService.Nickname)
+                    {
+                        <QuestionScreen/>
+                    }
+                    else
+                    {
+                        <div class="col p-3 text-center d-flex align-items-center justify-content-center @_smallQuestionTextClass">
+                            <h6>@GameService.Scenario.Localization.WaitYourTurnLabel</h6>
+                        </div>
+                    }
+                }
+                    break;
+                    
+                case RoundTypeId.Pantomime:
+                {
+                    @if (GameService.TargetPlayer!.Nickname == GameService.Nickname)
+                    {
+                        <PantomimeQuestionScreen/>
+                    }
+                    else
+                    {
+                        <PantomimeStubScreen/>
+                    }
+                }
+                    break;
+                    
+                default:
+                    <QuestionScreen/>
+                    break;
+            }
+        }
+            break;
+
+        case GameState.ShowingStats:
+            <RoundStatisticScreen/>
+            break;
+
+        case GameState.ShowingScenarioStats:
+            <ScenarioStatisticScreen/>
+            break;
+
+        case GameState.Voting:
+            @if (GameService.RoundsForVoting != null)
+            {
+                <div class="col p-3 text-center d-flex align-items-center justify-content-center">
+                    <h6>@GameService.Scenario.Localization.VotingLabel</h6>
+                </div>
+            }
+            else
+            {
+                <FocusOnScreen/>
+            }
+
+            break;
+
+        case GameState.Shop:
+            @if (GameService.ShopStateFinish)
+            {
+                <FocusOnScreen/>
+            }
+            else
+            {
+                <ShopScreen/>
+            }
+
+            break;
+
+        case GameState.ApplyingTargetModifiers:
+            @* @if (GameService.Bag.Contains(ModifierType.Mine) || GameService.Bag.Contains(ModifierType.ShuffleButtons)) *@
+            @* { *@
+            @*     <TargetModifiersScreen/> *@
+            @* } *@
+            @* else *@
+            @* { *@
+            @*     <div class="col p-3 text-center d-flex align-items-center justify-content-center"> *@
+            @*         <h6>Ожидание остальных игроков</h6> *@
+            @*     </div> *@
+            @* } *@
+            break;
+
+        case GameState.RevealShowing:
+            <PlayerRevealPlayer/>
+            break;
+
+
+        case GameState.Media:
+        case GameState.RoundPlaying:
+        default:
+            <FocusOnScreen/>
+            break;
+    }
+</div>
+
+@code {
+    private string _smallQuestionTextClass = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleCssModifiers;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleCssModifiers()
+    {
+        if (GameService.SmallText)
+            _smallQuestionTextClass = "question-small-text-modifier";
+        else
+            _smallQuestionTextClass = "";
+        
+        InvokeAsync(StateHasChanged);
+    }
+} 

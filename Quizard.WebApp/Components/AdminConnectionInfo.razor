@@ -1,0 +1,30 @@
+﻿<div class="row m-2">
+    <div class="col-auto">
+        <div class="row align-items-baseline">
+            <div class="col-auto text-start me-3">
+                <p>Connection Status: </p></div>
+            <div class="col-auto text-center me-3 btn border rounded @HubConnectionClass"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="@ConnectionId"
+                 data-bs-toggle="collapse"
+                 data-bs-target="#collapseOne"
+                 aria-controls="collapseOne">
+                SignalR
+            </div>
+            <div class="col-auto text-center me-3 btn border rounded @ApiConnectionClass">
+                Web API
+            </div>
+            <div class="col-auto text-center me-3 btn border rounded @ApiConnectionClass">
+                WWW Root Folder: @WwwrootFolder
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ConnectionId { get; set; } = "NOT CONNECTED";
+    [Parameter] public string WwwrootFolder { get; set; } = "NOT CONNECTED";
+    [Parameter] public string HubConnectionClass { get; set; } = "border-danger";
+    [Parameter] public string ApiConnectionClass { get; set; } = "border-danger";
+}

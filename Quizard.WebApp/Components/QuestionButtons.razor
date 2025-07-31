@@ -1,0 +1,459 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject IJSRuntime Js
+@inject GameService GameService
+@inject ILogger<QuestionButtons> Logger
+
+@if (Answers != null)
+{
+    @switch (Answers.Length)
+    {
+        case 2:
+            <div class="row mt-5 player-buttons">
+                <div class="col-12">
+                    <div class="row mt-5 mb-2">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClass(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClass(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            break;
+
+        case 4:
+            <div class="row mt-2 player-buttons">
+                <div class="col-12">
+                    <div class="row mb-2">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClass(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClass(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="row mb-2">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i + 2];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClass(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClass(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            break;
+
+        case 6:
+            <div class="row mt-2 player-buttons">
+                <div class="col-12">
+                    <div class="row mb-2">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClassForSixButton(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClassForSixButton(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="row mb-2">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i + 2];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClassForSixButton(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClassForSixButton(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="row">
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            var answer = Answers[i + 4];
+                            var isRight = (i % 2) == 1;
+
+                            <div class="col @GetButtonCssClassForSixButton(answer.Text, isRight)">
+                                <div class="row h-100">
+                                    @if (!isRight) { <div class="col-1"></div> }
+                                    @if (isRight)
+                                    {
+                                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    <div
+                                        @key="@answer.Id"
+                                        id="@answer.Id.ToString()"
+                                        data-key="@answer.Button"
+                                        @onclick="() => SendAnswer(answer)"
+                                        class="col-auto text-start text-break vstack justify-content-center @GetAnswerCssClassForSixButton(answer.Text) @_smallQuestionTextClass">
+                                        @ProcessText(answer.Text)
+                                    </div>
+                                    @if (!isRight)
+                                    {
+                                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                                            <img src="@GetButtonIconSrc(answer.Button)" 
+                                                 width="99" 
+                                                 height="99"
+                                                 alt="@answer.Button">
+                                        </div>
+                                    }
+                                    @if (isRight) { <div class="col-1"></div> }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            break;
+    }
+}
+
+@code {
+    private string _smallQuestionTextClass = "";
+
+    private Answer? CorrectAnswer { get; set; }
+    private Answer[]? Answers { get; set; }
+
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += () => _ = HandleGameServiceChanged();
+        GameService.OnChange += HandleCssModifiers;
+    }
+
+    private void HandleCssModifiers()
+    {
+        _smallQuestionTextClass = GameService.SmallText ? "question-small-text-modifier" : "";
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleGameServiceChanged()
+    {
+        Logger.LogInformation("Сработал HandleGameServiceChanged");
+        if (GameService.Question != null)
+        {
+            Logger.LogInformation("HandleGameServiceChanged за GameService.Question != null");
+            Logger.LogCritical("Ответы - {@A}", GameService.Question.Answers);
+            Answers = null;
+            CorrectAnswer = GameService.Question.Answers.FirstOrDefault(answer => answer.IsCorrect == true);
+
+            if (GameService.Question.AnswerDelay.HasValue)
+                await Task.Delay(TimeSpan.FromSeconds(GameService.Question.AnswerDelay.Value));
+            Answers = GameService.Question.Answers.ToArray();
+
+            Logger.LogInformation("HandleGameServiceChanged все завершилось");
+        }
+
+
+        Logger.LogInformation("HandleGameServiceChanged вызывает InvokeAsync(StateHasChanged)");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SendAnswer(Answer answer)
+    {
+        if (GameService.Round!.RoundTypeId != RoundTypeId.Ordering && GameService.AnswerAlreadyGiven)
+            return;
+
+        Logger.LogTrace("Удаляем нажатую кнопку");
+        await Js.InvokeVoidAsync("removeDataKey", answer.Id.ToString());
+
+        if (GameService.Round!.RoundTypeId != RoundTypeId.Ordering)
+        {
+            Logger.LogTrace("Удаляем оставшиеся кнопки");
+            if (Answers != null)
+            {
+                var otherAnswers = Answers.Where(a => a.Id != answer.Id).ToArray();
+                foreach (var otherAnswer in otherAnswers)
+                {
+                    await Js.InvokeVoidAsync("removeDataKey", otherAnswer.Id.ToString());
+                }
+            }
+        }
+
+        switch (GameService.Round!.RoundTypeId)
+        {
+            case RoundTypeId.Auction:
+            case RoundTypeId.Warmup:
+            case RoundTypeId.TrueFalse:
+            case RoundTypeId.Steps:
+            case RoundTypeId.Pantomime:
+            case RoundTypeId.HotPotato:
+                GameService.GivenAnswer = answer;
+                GameService.AnswerAlreadyGiven = true;
+                await GameService.HubConnection
+                    .SendAsync(nameof(GameHub.AnswerQuestion), GameService.GivenAnswer.IsCorrect);
+                break;
+
+            case RoundTypeId.GuessMelody:
+            case RoundTypeId.Blitz:
+            {
+                GameService.GivenAnswer = answer;
+                GameService.AnswerAlreadyGiven = true;
+
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                await GameService.HubConnection
+                    .SendAsync(nameof(GameHub.FastestAnswer), GameService.GivenAnswer.IsCorrect, timeStamp);
+            }
+                break;
+
+            case RoundTypeId.Ordering:
+            {
+                GameService.OrderedAnswers.Add(answer);
+
+                if (GameService.OrderedAnswers.Count == Answers!.Length)
+                {
+                    GameService.AnswerAlreadyGiven = true;
+                    await GameService.HubConnection.SendAsync(nameof(GameHub.AnswerQuestion), false);
+                }
+            }
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetButtonCssClass(string questionText, bool right)
+    {
+        var btnClass = right ? "question-btn-4-right" : "question-btn-4-left";
+        if (GameService.GivenAnswer is not null && GameService.GivenAnswer.Text == questionText)
+        {
+            btnClass += right ? " question-btn-4-right-chosen" : " question-btn-4-left-chosen";
+        }
+
+        if (GameService.OrderedAnswers.Any(a => a.Text == questionText))
+        {
+            btnClass += right ? " question-btn-4-right-chosen" : " question-btn-4-left-chosen";
+        }
+
+        if (GameService.GameState == GameState.RevealShowing
+            && CorrectAnswer is not null
+            && CorrectAnswer.Text == questionText)
+        {
+            btnClass += right ? " question-btn-4-right-correct" : " question-btn-4-left-correct";
+        }
+
+        return btnClass;
+    }
+
+    private string GetButtonCssClassForSixButton(string questionText, bool right)
+    {
+        var btnClass = right ? "question-btn-right" : "question-btn-left";
+        if (GameService.GivenAnswer is not null && GameService.GivenAnswer.Text == questionText)
+        {
+            btnClass += right ? " question-btn-right-chosen" : " question-btn-left-chosen";
+        }
+
+        if (GameService.GameState == GameState.RevealShowing
+            && CorrectAnswer is not null
+            && CorrectAnswer.Text == questionText)
+        {
+            btnClass += right ? " question-btn-right-correct" : " question-btn-left-correct";
+        }
+
+        return btnClass;
+    }
+
+    private static string ProcessText(string questionText) => $"• {questionText}";
+
+    private static string GetAnswerCssClass(string questionText) =>
+        questionText.Length > 90 ? "question-text question-text-small" : "question-text";
+
+    private static string GetAnswerCssClassForSixButton(string questionText) =>
+        questionText.Length > 35 ? "question-text question-text-small" : "question-text";
+
+    private string GetButtonIconSrc(string button)
+    {
+        switch (button)
+        {
+            case "Numpad1":
+                return "css/assets/button-icons/arrow-up.svg";
+
+            case "Numpad2":
+                return "css/assets/button-icons/circle.svg";
+
+            case "Numpad3":
+                return "css/assets/button-icons/arrow-down.svg";
+
+            case "Numpad4":
+                return "css/assets/button-icons/plus.svg";
+
+            case "Numpad5":
+                return "css/assets/button-icons/pedal-left.svg";
+
+            case "Numpad6":
+                return "css/assets/button-icons/pedal-right.svg";
+
+            default:
+                Logger.LogCritical("Кнопка {B} неизвестна", button);
+                throw new ArgumentOutOfRangeException($"Кнопка {button} неизвестна");
+        }
+    }}

@@ -1,0 +1,107 @@
+﻿@using System.Net
+@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.WebApp.Options
+@inject HttpClient Http
+@inject ILogger<AdminLicenseInfo> Logger
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="row m-2">
+    <div class="col-6">
+        <div class="row align-items-baseline">
+            <div class="col text-start me-3">
+                <p>License status: </p></div>
+            <div
+                class="col text-center me-3 btn border rounded @_licenseStatusClass"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseFour"
+                aria-controls="collapseFour">
+                @_licenseStatus
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="row align-items-baseline">
+            <div class="col text-center me-3 btn @_licenseExpiredClass rounded">@_licenseExpired</div>
+            <div class="col text-center me-3 btn @_licenseGamesClass rounded">@_licenseGames</div>
+            <div class="col-auto">
+                <button class="btn btn-primary rounded-circle"
+                        @onclick="GetLicenseStatus"
+                        title="Update license status">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private string _licenseStatus = "NOT ACTIVE";
+    private string _licenseStatusClass = "border-warning";
+    private string _licenseExpired = "Н/Д";
+    private string _licenseExpiredClass = "border-warning";
+    private string _licenseGames = "Н/Д";
+    private string _licenseGamesClass = "border-warning";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLicenseStatus();
+        
+        await InvokeAsync(StateHasChanged);
+        await base.OnInitializedAsync();
+    }
+    
+    private async Task GetLicenseStatus()
+    {
+        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/status");
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+        {
+            var licenseResponse = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License");
+            var license = await licenseResponse.Content.ReadFromJsonAsync<License>();
+            
+
+            try
+            {
+                _licenseStatus = "Active";
+                _licenseStatusClass = "border-success";
+
+                if (!long.TryParse(license!.ExpirationTime, out var expirationSeconds))
+                    throw new FormatException($"Неверный формат UNIX‑таймстампа: {license.ExpirationTime}");
+                
+                _licenseExpired = $"{DateTimeOffset.FromUnixTimeSeconds(expirationSeconds):dd.MM.yyyy}";
+                if (DateTime.Now - DateTimeOffset.FromUnixTimeSeconds(expirationSeconds) > TimeSpan.FromDays(10))
+                    _licenseExpiredClass = "border-success";
+
+                _licenseGames = $"{license.GamesLeft} games left";
+                if (int.Parse(license.GamesLeft) > 10)
+                    _licenseGamesClass = "border-success";
+
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Error: {E}", e);
+                _licenseStatus = "NOT ACTIVE";
+                _licenseStatusClass = "border-warning";
+                _licenseExpired = "N/A";
+                _licenseExpiredClass = "border-warning";
+                _licenseGames = "N/A";
+                _licenseGamesClass = "border-warning";
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        else
+        {
+            _licenseStatus = "NOT ACTIVE";
+            _licenseStatusClass = "border-warning";
+            _licenseExpired = "N/A";
+            _licenseExpiredClass = "border-warning";
+            _licenseGames = "N/A";
+            _licenseGamesClass = "border-warning";
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

@@ -1,0 +1,52 @@
+﻿@using Microsoft.Extensions.Options
+@using Quizard.WebApp.Options
+@using Quizard.WebApp.Services
+@inject ILogger<Placeholder> Logger
+@inject ScenarioService ScenarioService
+@inject IOptions<BackendOptions> BackendOptions
+
+@if (FinishPlaceholder)
+{
+    <img src="@FinishPlaceholderUrl" class="img-fluid" alt="placeholder"/>
+}
+else
+{
+    <img src="@PlaceholderUrl" class="img-fluid" alt="placeholder"/>
+}
+
+@code {
+    [Parameter]
+    public bool FinishPlaceholder { get; set; }
+    
+    private string? PlaceholderUrl { get; set; }
+    private string? FinishPlaceholderUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Инициализация плейсхолдера. Финишный плейсхолдер - {FFlag}", FinishPlaceholder);
+        ScenarioService.OnChange += ScenarioUpdated;
+        GetPlaceholderUrl();
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ScenarioUpdated()
+    {
+        if (ScenarioService.Scenario is null) return;
+
+        Logger.LogTrace("Обновляем ссылки на плейсхолдеры");
+        GetPlaceholderUrl();
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void GetPlaceholderUrl()
+    {
+        PlaceholderUrl = ScenarioService.Scenario is null 
+            ? "assets/default-placeholder.png" 
+            : $"{BackendOptions.Value.BaseUrl}{ScenarioService.Scenario.Placeholder}";
+        
+        if (ScenarioService.Scenario is null) return;
+        FinishPlaceholderUrl = $"{BackendOptions.Value.BaseUrl}{ScenarioService.Scenario.FinishPlaceholder}";
+    }
+}

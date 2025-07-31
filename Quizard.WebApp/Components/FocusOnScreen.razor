@@ -1,0 +1,13 @@
+@using Quizard.WebApp.Services
+@inject GameService GameService
+
+<div class="col p-3 text-center d-flex align-items-center justify-content-center">
+    <h6>@GameService.Scenario.Localization.AttentionLabel</h6>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+    }
+}

@@ -1,0 +1,17 @@
+﻿<div class="col text-center d-flex align-items-center justify-content-center">
+    <h1>@Label</h1>
+</div>
+
+@code {
+    [Parameter] 
+    public string? Label { get; set; }
+    
+    protected override Task OnParametersSetAsync()
+    {
+        if (Label is null)
+            return Task.CompletedTask;
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

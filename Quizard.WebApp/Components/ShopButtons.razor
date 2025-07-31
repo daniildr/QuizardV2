@@ -1,0 +1,175 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject ILogger<PlayerChoiseButtons> Logger
+@inject GameService GameService
+
+@if (GameService.ShopStateFinish)
+{
+}
+else
+{
+    <div class="row mt-3 player-buttons">
+        <div class="col-12">
+            <div class="row mb-2">
+                <div class="col question-btn-4-left">
+                    <div class="row h-100">
+                        <div class="col-3"></div>
+                        <div class="col-7 text-start p-4">
+                            <p data-key="Numpad1" @onclick="PreviousItem" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonUp</p>
+                        </div>
+                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                            <img src="css/assets/button-icons/arrow-up.svg" width="99" height="99" alt="Внимание">
+                        </div>
+                    </div>
+                </div>
+                <div class="col question-btn-4-right">
+                    <div class="row h-100">
+                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                            <img src="css/assets/button-icons/circle.svg" width="99" height="99" alt="Внимание">
+                        </div>
+                        <div class="col-9 text-start p-4">
+                            <p data-key="Numpad3" @onclick="BayItem" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonBuy</p>
+                        </div>
+                        <div class="col-1"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col question-btn-4-left">
+                    <div class="row h-100">
+                        <div class="col-3"></div>
+                        <div class="col-7 text-start p-4">
+                            <p data-key="Numpad2" @onclick="NextItem" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonDown</p>
+                        </div>
+                        <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                            <img src="css/assets/button-icons/arrow-down.svg" width="99" height="99" alt="Внимание">
+                        </div>
+                    </div>
+                </div>
+                <div class="col question-btn-4-right">
+                    <div class="row h-100">
+                        <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                            <img src="css/assets/button-icons/plus.svg" width="99" height="99" alt="Внимание">
+                        </div>
+                        <div class="col-9 text-start p-4">
+                            <p data-key="Numpad4" @onclick="EndState" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonFinish</p>
+                        </div>
+                        <div class="col-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private int _currentIndex;
+
+    protected override void OnInitialized()
+    {
+        GameService.ShopStateFinish = false;
+        GameService.OnChange += StateHasChanged;
+    }
+
+    private async Task NextItem()
+    {
+        if (GameService.ShopStock!.Length == 0)
+            return;
+
+        _currentIndex = (_currentIndex + 1) % GameService.ShopStock!.Length;
+        GameService.CurrentShopItem = GameService.ShopStock[_currentIndex];
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PreviousItem()
+    {
+        if (GameService.ShopStock!.Length == 0)
+            return;
+
+        _currentIndex = (_currentIndex - 1 + GameService.ShopStock.Length) % GameService.ShopStock.Length;
+        GameService.CurrentShopItem = GameService.ShopStock[_currentIndex];
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task BayItem()
+    {
+        if (GameService.CurrentShopItem.CostMultiplier * GameService.Scenario!.BasePointPrice > GameService.Score)
+        {
+            GameService.ShopStatus = GameService.Scenario.Localization.InsufficientFunds;
+            _ = Task.Run(async () =>
+            {
+                var currentStatus = GameService.ShopStatus;
+                await Task.Delay(750);
+
+                if (GameService.ShopStatus == currentStatus)
+                {
+                    GameService.ShopStatus = null;
+                    await InvokeAsync(StateHasChanged);
+                }
+            });
+        }
+        else
+        {
+            if (GameService.CurrentShopItem.UniqForPlayer
+                && GameService.PurchasedItems.Contains(GameService.CurrentShopItem.ModifierType))
+            {
+                GameService.ShopStatus = GameService.Scenario.Localization.ProductHasBeenPurchased;
+                _ = Task.Run(async () =>
+                {
+                    var currentStatus = GameService.ShopStatus;
+                    await Task.Delay(750);
+
+                    if (GameService.ShopStatus == currentStatus)
+                    {
+                        GameService.ShopStatus = null;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                });
+            }
+            else
+            {
+                if (GameService.Bag.Contains(GameService.CurrentShopItem.ModifierType))
+                {
+                    GameService.ShopStatus = GameService.Scenario.Localization.ProductAlreadyPurchased;
+                    _ = Task.Run(async () =>
+                    {
+                        var currentStatus = GameService.ShopStatus;
+                        await Task.Delay(750);
+
+                        if (GameService.ShopStatus == currentStatus)
+                        {
+                            GameService.ShopStatus = null;
+                            await InvokeAsync(StateHasChanged);
+                        }
+                    });
+                }
+                else
+                {
+                    GameService.ShopStatus = GameService.Scenario.Localization.ShopWaitLabel;
+                    GameService.ChosenShopItem = GameService.CurrentShopItem;
+
+                    await GameService.HubConnection
+                        .SendAsync(nameof(GameHub.PlayerMakePurchase), GameService.ChosenShopItem.ModifierType);
+        
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EndState()
+    {
+        GameService.ShopStateFinish = true;
+        GameService.CurrentShopItem = null;
+        GameService.ChosenShopItem = null;
+        await GameService.HubConnection.SendAsync(nameof(GameHub.PlayerHasCompletedPurchases));
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

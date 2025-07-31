@@ -1,0 +1,106 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Quizard.SignalR
+@using Quizard.WebApp.Services
+@inject ILogger<PlayerChoiseButtons> Logger
+@inject GameService GameService
+
+<div class="row mt-3 player-buttons">
+    <div class="col-12">
+        <div class="row mb-2">
+            <div class="col question-btn-4-left">
+                <div class="row h-100">
+                    <div class="col-3"></div>
+                    <div class="col-7 text-start p-4">
+                        <p data-key="Numpad1" @onclick="PreviousPlayer" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonUp</p>
+                    </div>
+                    <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                        <img src="css/assets/button-icons/arrow-up.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                </div>
+            </div>
+            <div class="col question-btn-4-right">
+                <div class="row h-100">
+                    <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                        <img src="css/assets/button-icons/circle.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                    <div class="col-9 text-start p-4">
+                        <p data-key="Numpad3" @onclick="InitializePlayer" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonConfirm</p>
+                    </div>
+                    <div class="col-1"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col question-btn-4-left">
+                <div class="row h-100">
+                    <div class="col-3"></div>
+                    <div class="col-7 text-start p-4"><p data-key="Numpad2" @onclick="NextPlayer" class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonDown</p></div>
+                    <div class="col-auto ms-auto pe-0 question-btn-pictogram-left">
+                        <img src="css/assets/button-icons/arrow-down.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                </div>
+            </div>
+            <div class="col question-btn-4-right">
+                <div class="row h-100">
+                    <div class="col-auto me-auto ps-0 question-btn-pictogram-right">
+                        <img src="css/assets/button-icons/plus.svg" width="99" height="99" alt="Внимание">
+                    </div>
+                    <div class="col-9 text-start p-4"><p class="system-button-label mb-0">@GameService.Scenario.Localization.ButtonCancel</p></div>
+                    <div class="col-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _currentIndex;
+
+    [Parameter] 
+    public string RackId { get; set; } = null!;
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RackId))
+            return Task.CompletedTask;
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+    
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+    }
+
+    private async Task NextPlayer()
+    {
+        if (GameService.PlayersList.Count == 0)
+            return;
+
+        _currentIndex = (_currentIndex + 1) % GameService.PlayersList.Count;
+        GameService.Nickname = GameService.PlayersList[_currentIndex];
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PreviousPlayer()
+    {
+        if (GameService.PlayersList.Count == 0)
+            return;
+
+        _currentIndex = (_currentIndex - 1 + GameService.PlayersList.Count) % GameService.PlayersList.Count;
+        GameService.Nickname = GameService.PlayersList[_currentIndex];
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task InitializePlayer()
+    {
+        await GameService.HubConnection.SendAsync(nameof(GameHub.IdentifyPlayer), GameService.Nickname, RackId);
+        GameService.PlayerInitial = true;
+        GameService.Score = 0;
+        
+        await InvokeAsync(StateHasChanged);
+    }
+}

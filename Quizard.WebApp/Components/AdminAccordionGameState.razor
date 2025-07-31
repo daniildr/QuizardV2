@@ -1,0 +1,48 @@
+﻿@using Quizard.Core.Enums
+<div class="accordion-item">
+    <h2 class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Current state of the game session
+        </button>
+    </h2>
+    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+            <ul class="nav nav-pills nav-fill">
+                @foreach (var gs in _gameStates)
+                {
+                    <li class="nav-item">
+                        <span class="nav-link @(gs == GameState ? "active" : "")">
+                            @GetStateDisplayName(gs)
+                        </span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public GameState GameState { get; set; }
+    
+    private readonly GameState[] _gameStates = (GameState[])Enum.GetValues(typeof(GameState));
+    
+    private static string GetStateDisplayName(GameState state) => state switch
+    {
+        GameState.NotStarted => "Game not started",
+        GameState.WaitingForPlayers => "Waiting for players",
+        GameState.Media => "Media file is playing",
+        GameState.RoundPlaying => "Introducing a game round",
+        GameState.QuestionPlaying => "Players answer the question",
+        GameState.RevealShowing => "The correct answer is displayed",
+        GameState.WaitStats => "Waiting for round statistics",
+        GameState.ShowingStats => "Show statistics",
+        GameState.Voting => "Vote",
+        GameState.Shop => "Store stage",
+        GameState.ApplyingTargetModifiers => "Using items",
+        GameState.Finished => "Game Over",
+        GameState.Pause => "Pause",
+        _ => state.ToString()
+    };
+    
+}

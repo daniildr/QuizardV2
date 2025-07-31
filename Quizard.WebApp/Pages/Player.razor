@@ -1,0 +1,502 @@
+﻿@page "/Player/{rackName}"
+@using System.Net
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Options
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Serialization
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.Core.Models.Responses
+@using Quizard.SignalR
+@using Quizard.WebApp.Components
+@using Quizard.WebApp.Options
+@using Quizard.WebApp.Services
+@layout BlankLayout
+@inject HttpClient HttpClient
+@inject ILogger<Player> Logger
+@inject GameService GameService
+@inject NavigationManager NavManager
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="container-fluid player-body @GetModifierStyle()">
+    <PlayerHeaderComponent/>
+    <PlayerCentralScreenComponent/>
+    <PlayerButtonsComponent RackId="@RackName"/>
+</div>
+
+@code {
+    [Parameter] public string RackName { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogWarning("Rack name - {RackName}", RackName);
+        Logger.LogInformation("Клиент будет работать в режиме игровой стойки");
+        GameService.OnChange += StateHasChanged;
+
+        Logger.LogTrace("Выполняется подключение к хабу");
+        GameService.HubConnection = new HubConnectionBuilder()
+            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .AddNewtonsoftJsonProtocol(options =>
+            {
+                options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy
+                    {
+                        ProcessDictionaryKeys = true,
+                        OverrideSpecifiedNames = false
+                    }
+                };
+                options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                options.PayloadSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        var response = await HttpClient.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/status");
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return;
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        GameService.GameState = Enum.Parse<GameState>(responseJson);
+
+        Logger.LogTrace("Подписка на принудительное окончание сессии");
+        GameService.HubConnection.On(HubMethods.ForceDisconnect, () =>
+        {
+            Logger.LogWarning("Игровая сессия принудительно завершена");
+            NavManager.NavigateTo("/", forceLoad: true);
+        });
+
+        Logger.LogTrace("Подписка на изменение стадии");
+        GameService.HubConnection.On<GameState, GameTrigger>(HubMethods.GameStateChanged,
+            async (gameState, gameTrigger) =>
+            {
+                await Task.Delay(400).ConfigureAwait(false);
+                GameService.GameState = gameState;
+                GameService.GameTrigger = gameTrigger;
+
+                if (GameService.GameState == GameState.RevealShowing)
+                {
+                    if (GameService.Round!.RoundTypeId != RoundTypeId.Pantomime)
+                    {
+                        Logger.LogTrace("Выполняется проверка данного игроком ответа");
+                        if (GameService.GivenAnswer != null)
+                        {
+                            if (GameService.GivenAnswer.IsCorrect != null)
+                            {
+                                if ((bool)GameService.GivenAnswer.IsCorrect)
+                                {
+                                    Logger.LogInformation("Пользователь дал правильный ответ");
+
+                                    switch (GameService.Round!.RoundTypeId)
+                                    {
+                                        case RoundTypeId.HotPotato:
+                                        case RoundTypeId.Warmup:
+                                        case RoundTypeId.TrueFalse:
+                                            GameService.CurrentRoundScore +=
+                                                GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+                                            break;
+
+                                        case RoundTypeId.GuessMelody:
+                                        case RoundTypeId.Blitz:
+                                        {
+                                            if (GameService.Nickname == GameService.SpeedWinnerNickname)
+                                                GameService.CurrentRoundScore +=
+                                                    GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+
+                                            GameService.SpeedWinnerNickname = null;
+                                        }
+                                            break;
+
+                                        case RoundTypeId.Auction:
+                                        {
+                                            GameService.CurrentRoundScore += GameService.PlayerBet!.Value;
+                                        }
+                                            break;
+
+                                        case RoundTypeId.Steps:
+                                        {
+                                            var score =
+                                                GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+
+                                            switch (GameService.UsedHints.Count)
+                                            {
+                                                case 1:
+                                                    GameService.CurrentRoundScore += score;
+                                                    break;
+                                                case 2:
+                                                    GameService.CurrentRoundScore += score * 6 / 10;
+                                                    break;
+                                                case 3:
+                                                    GameService.CurrentRoundScore += score * 3 / 10;
+                                                    break;
+                                            }
+                                        }
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    Logger.LogInformation("Пользователь дал не правильный ответ");
+                                    if (GameService.Bag.Contains(ModifierType.MistakePass))
+                                    {
+                                        Logger.LogTrace("Игрок имеет право на ошибку");
+                                        GameService.RemoveItemInBag(ModifierType.MistakePass);
+
+                                        if (GameService.PlayerBet.HasValue)
+                                        {
+                                            GameService.CurrentRoundScore += GameService.PlayerBet.Value;
+                                        }
+                                        else
+                                        {
+                                            GameService.CurrentRoundScore +=
+                                                GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (GameService.PlayerBet.HasValue)
+                                        {
+                                            GameService.CurrentRoundScore -= GameService.PlayerBet.Value;
+                                        }
+                                        else
+                                        {
+                                            GameService.CurrentRoundScore -=
+                                                GameService.Scenario!.BasePointPrice * GameService.Round!.IncorrectMultiplier;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (GameService.OrderedAnswers.Count == GameService.Question!.Answers.Count)
+                        {
+                            var givenOrder = GameService.OrderedAnswers.Select(a => a.Order ?? int.MinValue);
+
+                            var correctOrder = GameService.OrderedAnswers
+                                .Select(a => a.Order ?? int.MinValue)
+                                .OrderBy(o => o);
+
+                            var isInCorrectOrder = givenOrder.SequenceEqual(correctOrder);
+                            if (isInCorrectOrder)
+                            {
+                                Logger.LogInformation("Пользователь дал правильный ответ");
+                                GameService.CurrentRoundScore +=
+                                    GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+                            }
+                            else
+                            {
+                                Logger.LogInformation("Пользователь дал не правильный ответ");
+                                if (GameService.Bag.Contains(ModifierType.MistakePass))
+                                {
+                                    Logger.LogTrace("Игрок имеет право на ошибку");
+                                    GameService.RemoveItemInBag(ModifierType.MistakePass);
+
+                                    GameService.CurrentRoundScore +=
+                                        GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+                                }
+                                else
+                                {
+                                    GameService.CurrentRoundScore -=
+                                        GameService.Scenario!.BasePointPrice * GameService.Round!.IncorrectMultiplier;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Logger.LogWarning("Игрок пропустил вопрос");
+                            GameService.CurrentRoundScore -=
+                                GameService.Scenario!.BasePointPrice * GameService.Round!.MissedMultiplier;
+                        }
+                    }
+
+                    //Секция для аукциона
+                    GameService.PlayerBet = null;
+                }
+
+                if (GameService.GameState == GameState.WaitStats)
+                {
+                    Logger.LogTrace("Отправка статистики прошедшего раунда");
+                    if (GameService.Bag.Contains(ModifierType.GoldRound))
+                    {
+                        GameService.Score += GameService.CurrentRoundScore * 3;
+                        GameService.RemoveItemInBag(ModifierType.GoldRound);
+                        await GameService.HubConnection
+                            .SendAsync(nameof(GameHub.SendStatistics), GameService.CurrentRoundScore * 3)
+                            .ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        GameService.Score += GameService.CurrentRoundScore;
+                        await GameService.HubConnection
+                            .SendAsync(nameof(GameHub.SendStatistics), GameService.CurrentRoundScore)
+                            .ConfigureAwait(false);
+                    }
+
+                    GameService.CurrentRoundScore = 0;
+
+                    // Очистка свойств ответа
+                    GameService.GivenAnswer = null;
+                    GameService.OrderedAnswers.Clear();
+                    GameService.UsedHints.Clear();
+                    GameService.TargetPlayer = null;
+                    GameService.SpeedWinnerNickname = null;
+                    
+                    // Очистка сумки
+                    GameService.MirrorInterface = false;
+                    GameService.BrightScreen = false;
+                    GameService.SmallText = false;
+                    
+                    if (GameService.Bag.Contains(ModifierType.MirrorTrap))
+                        GameService.RemoveItemInBag(ModifierType.MirrorTrap);
+                    
+                    if (GameService.Bag.Contains(ModifierType.ReduceTextSize))
+                        GameService.RemoveItemInBag(ModifierType.ReduceTextSize);
+                    
+                    if (GameService.Bag.Contains(ModifierType.BrightInterface))
+                        GameService.RemoveItemInBag(ModifierType.BrightInterface);
+                }
+
+                if (GameService.GameState == GameState.Finished)
+                {
+                    Logger.LogTrace("Отправка статистики прошедшего сценария");
+                    await GameService.HubConnection
+                        .SendAsync(nameof(GameHub.SendScenarioStatistics), GameService.Score)
+                        .ConfigureAwait(false);
+                }
+
+                if (GameService.GameState == GameState.ApplyingTargetModifiers)
+                {
+                    foreach (var modifier in GameService.Bag)
+                    {
+                        switch (modifier)
+                        {
+                            case ModifierType.ShuffleButtons:
+                                break;
+                            case ModifierType.Mine:
+                                break;
+                            case ModifierType.MistakePass:
+                                break;
+
+                            case ModifierType.MirrorTrap:
+                            case ModifierType.ReduceTextSize:
+                            case ModifierType.BrightInterface:
+                            {
+                                Logger.LogInformation("Игрок применяет модификатор {M}", modifier);
+                                await GameService.HubConnection
+                                    .SendAsync(nameof(GameHub.SubmitNotTargetModifier), modifier);
+                            }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
+
+                    Logger.LogTrace("Завершение применения модификаторов"); //TODO: Заглушка
+                    await GameService.HubConnection
+                        .SendAsync(nameof(GameHub.PlayerHasCompletedApplicationTargetModifier))
+                        .ConfigureAwait(false);
+                }
+
+                await InvokeAsync(StateHasChanged);
+            });
+        
+        Logger.LogTrace("Подписка на оповещение применения нецелевых модификаторов");
+        GameService.HubConnection.On<ModifierType>(HubMethods.ModifierApplied, async modifier =>
+        {
+            switch (modifier)
+            {
+                case ModifierType.MirrorTrap:
+                {
+                    if (!GameService.Bag.Contains(ModifierType.MirrorTrap))
+                        GameService.MirrorInterface = true;
+                }
+                    break;
+                    
+                case ModifierType.ReduceTextSize:
+                {
+                    if (!GameService.Bag.Contains(ModifierType.ReduceTextSize))
+                        GameService.SmallText = true;
+                }
+                    break;
+                    
+                case ModifierType.BrightInterface:
+                {
+                    if (!GameService.Bag.Contains(ModifierType.BrightInterface))
+                        GameService.BrightScreen = true;
+                }
+                    break;
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение коллекции других игроков");
+        GameService.HubConnection.On<string[]>(HubMethods.ReceivePlayerList, async nicknames =>
+        {
+            foreach (var nickname in nicknames)
+                GameService.PlayersList.Add(nickname);
+
+            GameService.Nickname = GameService.PlayersList.First();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение игрового сценария");
+        GameService.HubConnection.On<Scenario>(HubMethods.ReceiveGameScenario, async scenario =>
+        {
+            GameService.Scenario = scenario;
+            GameService.Score = scenario.StartPlayerScore;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на старт нового раунда");
+        GameService.HubConnection.On<Round>(HubMethods.RoundStarted, async round =>
+        {
+            GameService.RoundsForVoting = null;
+            GameService.ChosenRound = null;
+            GameService.RoundNumber += 1;
+            GameService.Round = round;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение текущего вопроса");
+        GameService.HubConnection.On<Question>(HubMethods.QuestionStarted, async question =>
+        {
+            GameService.GivenAnswer = null;
+            GameService.OrderedAnswers.Clear();
+            GameService.UsedHints.Clear();
+            GameService.Question = question;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение текущего вопроса");
+        GameService.HubConnection.On<Core.Entities.Player, Question>(HubMethods.TargetQuestionStarted,
+            async (player, question) =>
+            {
+                GameService.GivenAnswer = null;
+                GameService.OrderedAnswers.Clear();
+                GameService.UsedHints.Clear();
+                GameService.TargetPlayer = player;
+                GameService.Question = question;
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        Logger.LogTrace("Подписываемся на победителя скоростного вопроса");
+        GameService.HubConnection.On<string>(HubMethods.SpeedQuestionWinner,
+            async winnerNickname =>
+            {
+                Logger.LogCritical("Получен победитель - {W}", winnerNickname);
+                GameService.SpeedWinnerNickname = winnerNickname;
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        Logger.LogTrace("Подписываемся на получение счета победителя пантомимы");
+        GameService.HubConnection.On<int>(HubMethods.InteractiveQuestionResults, async winnerPoints =>
+        {
+            if (GameService.TargetPlayer!.Nickname == GameService.Nickname)
+            {
+                Logger.LogCritical("Вы набрали в пантомиме - {P}", winnerPoints);
+                GameService.CurrentRoundScore += winnerPoints;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение статистики раунда");
+        GameService.HubConnection.On<RoundStatistic[]>(HubMethods.ShowStatistics, async roundStatistics =>
+        {
+            GameService.RoundStatistics = roundStatistics;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на получение статистики игры");
+        GameService.HubConnection.On<ScenarioStatistic[]>(HubMethods.ShowScenarioStatistics, async scenarioStatistics =>
+        {
+            GameService.ScenarioStatistic = scenarioStatistics;
+
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Logger.LogTrace("Подписка на старт голосования");
+        GameService.HubConnection.On<Round[]>(HubMethods.VotingStarted,
+            async rounds =>
+            {
+                GameService.ChosenRound = null;
+                GameService.RoundsForVoting = rounds;
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        Logger.LogTrace("Подписка на старт этапа магазина");
+        GameService.HubConnection.On<PurchasePhaseConfiguration>(HubMethods.ShopStarted,
+            async purchasePhaseConfiguration =>
+            {
+                GameService.ShopStatus = null;
+                GameService.ShopDuration = purchasePhaseConfiguration.Duration;
+                GameService.ShopStock = purchasePhaseConfiguration.ShopStocks.ToArray();
+                GameService.CurrentShopItem = GameService.ShopStock.First();
+                
+                GameService.ShopBackUp ??= purchasePhaseConfiguration.ShopStocks.ToArray();
+                await InvokeAsync(StateHasChanged);
+            });
+
+        Logger.LogTrace("Подписка на результат покупки");
+        GameService.HubConnection.On<bool>(HubMethods.ShopResults,
+            async result =>
+            {
+                if (result)
+                {
+                    GameService.ShopStatus = "Предмет приобретен";
+                    GameService.Score -=
+                        GameService.ChosenShopItem!.CostMultiplier * GameService.Scenario!.BasePointPrice;
+                    GameService.AddItemInBag(GameService.ChosenShopItem!.ModifierType);
+                }
+                else
+                {
+                    GameService.ShopStatus = "Товар закончился";
+                }
+
+                GameService.ChosenShopItem = null;
+
+                _ = Task.Run(async () =>
+                {
+                    var currentStatus = GameService.ShopStatus;
+                    await Task.Delay(2000);
+
+                    if (GameService.ShopStatus == currentStatus)
+                    {
+                        GameService.ShopStatus = null;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                });
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        Logger.LogTrace("Подписка на обновление остатков магазина");
+        GameService.HubConnection.On<Stock[]>(HubMethods.StockUpdated,
+            async newStock =>
+            {
+                GameService.ShopStock = newStock;
+                GameService.CurrentShopItem = GameService.ShopStock.First();
+
+                await InvokeAsync(StateHasChanged);
+            });
+
+        await GameService.HubConnection.StartAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetModifierStyle()
+    {
+        var mainStyle = "";
+        if (GameService.MirrorInterface)
+            mainStyle += " mirror";
+
+        return mainStyle;
+    }
+}

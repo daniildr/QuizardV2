@@ -1,0 +1,122 @@
+﻿@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.Core.Enums
+@using Quizard.WebApp.Options
+@inject IOptions<BackendOptions> BackendOptions
+
+<div class="ratio ratio-16x9">
+    @if (Media == null)
+    {
+        <Placeholder/>
+    }
+    else
+    {
+        @switch (Media.Type)
+        {
+            case MediaType.Audio:
+                @if (_show)
+                {
+                    <audio autoplay="autoplay" @onended="OnMediaEndedInternal">
+                        <source src="@(BackendOptions.Value.BaseUrl + Media.Url)" type="audio/mpeg"/>
+                        Ваш браузер не поддерживает аудио.
+                    </audio>
+                    <div class="d-flex justify-content-center align-items-center vh-100">
+                        <i class="bi bi-music-note" style="font-size: 10rem;"></i>
+                    </div>
+                }
+                else
+                {
+                    <Placeholder/>
+                }
+
+                break;
+
+            case MediaType.Image:
+                @if (_show)
+                {
+                    <img src="@(BackendOptions.Value.BaseUrl + Media.Url)" class="img-fluid" alt=""/>
+                }
+                else
+                {
+                    <Placeholder/>
+                }
+
+                break;
+
+            case MediaType.Video:
+                @if (_show)
+                {
+                    <video autoplay="autoplay" @onended="OnMediaEndedInternal" muted playsinline>
+                        <source src="@(BackendOptions.Value.BaseUrl + Media.Url)" type="video/webm"/>
+                    </video>
+                }
+                else
+                {
+                    <Placeholder/>
+                }
+
+                break;
+
+            case MediaType.Text:
+                @if (_show)
+                {
+                    <div class="d-flex justify-content-center align-items-center vh-100">
+                        <div class="p-3 text-center">
+                            <h1>@Media.Content</h1>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <Placeholder/>
+                }
+
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        @if (_show
+             && Media.Type is MediaType.Audio or MediaType.Video or MediaType.Image
+             && !string.IsNullOrWhiteSpace(Media.Content))
+        {
+            <div class="position-absolute bottom-0 bg-dark bg-opacity-50 text-white">
+                @Media.Content
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public Media? Media { get; set; }
+    [Parameter] public EventCallback OnMediaEnded { get; set; }
+
+    private bool _show;
+
+    private async Task OnMediaEndedInternal()
+    {
+        await OnMediaEnded.InvokeAsync(null);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Media is null)
+            return;
+        
+        _show = false;
+        StateHasChanged();
+
+        await Task.Delay(Media.DelaySeconds * 1_000);
+        
+        _show= true;
+        
+        StateHasChanged();
+
+        if (Media.Type is MediaType.Text or MediaType.Image)
+        {
+            await Task.Delay((Media.Duration ?? 20) * 1_000);
+            await OnMediaEndedInternal();
+        }
+    }
+}

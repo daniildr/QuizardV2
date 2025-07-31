@@ -1,0 +1,96 @@
+@using Quizard.WebApp.Services
+@inject GameService GameService
+@inject ILogger<PantomimeQuestionScreen> Logger
+
+<div class="col-12">
+    <div class="row">
+        <div class="col-auto ms-auto question-timer position-relative" style="left: 10px;">
+            <p>@_remainingSeconds</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col ps-5 pt-1 pe-5 text-center @_smallQuestionTextClass">
+            <p>@GameService.Scenario.Localization.PantomimeLabel @GameService.TargetPlayer?.Nickname</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _smallQuestionTextClass = "";
+    
+    private int _remainingSeconds;
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        GameService.OnChange += StateHasChanged;
+        GameService.OnChange += HandleGameServiceChanged;
+        GameService.OnChange += HandlePlayerAnswer;
+        GameService.OnChange += HandleCssModifiers;
+    }
+
+    private void HandleCssModifiers()
+    {
+        _smallQuestionTextClass = GameService.SmallText ? "question-small-text-modifier" : "";
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleGameServiceChanged()
+    {
+        if (GameService.Question != null)
+        {
+            StartTimer(GameService.Question.QuestionTimeout);
+            GameService.OnChange -= HandleGameServiceChanged;
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandlePlayerAnswer()
+    {
+        if (!GameService.AnswerAlreadyGiven) return;
+        if (_timer is null) return;
+
+        _timer.Stop();
+        _timer.Elapsed -= OnTimerElapsed;
+        _timer.Dispose();
+        _timer = null;
+        GameService.AnswerAlreadyGiven = false;
+    }
+
+    private void StartTimer(int seconds)
+    {
+        _remainingSeconds = seconds;
+        _timer?.Stop();
+        _timer?.Dispose();
+
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += OnTimerElapsed;
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void OnTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (_remainingSeconds <= 0)
+        {
+            Dispose();
+        }
+        else
+        {
+            _remainingSeconds--;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void Dispose()
+    {
+        if (_timer is null) return;
+
+        _timer.Stop();
+        _timer.Elapsed -= OnTimerElapsed;
+        _timer.Dispose();
+        _timer = null;
+    }
+}

@@ -1,0 +1,44 @@
+@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.WebApp.Options
+@inject IOptions<BackendOptions> BackendOptions
+
+@if (!ShowStats)
+{
+    <Placeholder FinishPlaceholder="true"/>
+}
+else
+{
+    @if (ScenarioStatistic != null)
+    {
+        <div class="row m-2">
+            <div class="col-12 mb-4 d-flex justify-content-start">
+                <ul class="list-group list-group-flush w-100">
+                    @foreach (var stat in ScenarioStatistic)
+                    {
+                        <li
+                            class="list-group-item d-flex justify-content-between w-100"
+                            style="background-color:#2A2A2A; color:#e2f4c2;">
+                            <span>@stat.Player.Nickname</span>
+                            <span class="fw-bold">@stat.Score</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public bool ShowStats { get; set; }
+    [Parameter] public ScenarioStatistic[]? ScenarioStatistic { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (ScenarioStatistic is null)
+            return Task.CompletedTask;
+        
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

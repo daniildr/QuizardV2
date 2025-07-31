@@ -1,0 +1,35 @@
+﻿@using Quizard.WebApp.Services
+@inherits LayoutComponentBase
+@inject HeaderService HeaderSvc
+
+<div style="background-color: #ffffff;">
+    <!-- Общий каркас страницы -->
+    <div class="d-flex flex-column min-vh-100">
+        <!-- Header -->
+        <header class="bg-light py-3 shadow-sm">
+            <div class="container">
+                <h1 class="h4 mb-0">@HeaderSvc.Header</h1>
+            </div>
+        </header>
+    
+        <!-- Body: всю основную разметку помещаем внутрь контейнера -->
+        <main class="flex-fill py-4">
+            <div class="container">
+                @Body
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-light py-3 mt-auto">
+            <div class="container">
+                <small class="text-muted">© 2025 Quizard</small>
+            </div>
+        </footer>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => HeaderSvc.OnChange += StateHasChanged;
+
+    public void Dispose() => HeaderSvc.OnChange -= StateHasChanged;
+}

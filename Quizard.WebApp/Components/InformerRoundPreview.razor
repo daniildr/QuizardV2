@@ -1,0 +1,34 @@
+﻿@using Microsoft.Extensions.Options
+@using Quizard.Core.Entities
+@using Quizard.WebApp.Options
+@inject IOptions<BackendOptions> BackendOptions
+
+@if (Round != null)
+{
+    @if (Round.PreviewUrl != null)
+    {
+        <img src="@(BackendOptions.Value.BaseUrl + Round.PreviewUrl)" class="img-fluid" alt=""/>
+    }
+                
+    <div class="position-absolute bottom-0 bg-dark bg-opacity-50 text-white" style="color: #e2f4c2;">
+        <h1>@Round.Name</h1>
+        <p>@Round.Description</p>
+    </div>
+}
+else
+{
+    <Placeholder/>
+}
+
+@code {
+    [Parameter] public Round? Round { get; set; }
+    
+    protected override Task OnParametersSetAsync()
+    {
+        if (Round is null)
+            return Task.CompletedTask;
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

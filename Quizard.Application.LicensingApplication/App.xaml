@@ -1,0 +1,12 @@
+﻿<Application x:Class="Quizard.Application.LicensingApplication.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Quizard.Application.LicensingApplication"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <Style TargetType="Window">
+            <Setter Property="Icon"
+                    Value="pack://application:,,,/Resources/app.ico"/>
+        </Style>
+    </Application.Resources>
+</Application>
