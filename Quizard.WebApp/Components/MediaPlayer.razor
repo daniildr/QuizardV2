@@ -1,8 +1,6 @@
-﻿@using Microsoft.Extensions.Options
-@using Quizard.Core.Entities
+﻿@using Quizard.Core.Entities
 @using Quizard.Core.Enums
-@using Quizard.WebApp.Options
-@inject IOptions<BackendOptions> BackendOptions
+@inject NavigationManager Navigation
 
 <div class="ratio ratio-16x9">
     @if (Media == null)
@@ -17,7 +15,7 @@
                 @if (_show)
                 {
                     <audio autoplay="autoplay" @onended="OnMediaEndedInternal">
-                        <source src="@(BackendOptions.Value.BaseUrl + Media.Url)" type="audio/mpeg"/>
+                        <source src="@(Navigation.BaseUri.TrimEnd('/') + Media.Url)" type="audio/mpeg"/>
                         Ваш браузер не поддерживает аудио.
                     </audio>
                     <div class="d-flex justify-content-center align-items-center vh-100">
@@ -34,7 +32,7 @@
             case MediaType.Image:
                 @if (_show)
                 {
-                    <img src="@(BackendOptions.Value.BaseUrl + Media.Url)" class="img-fluid" alt=""/>
+                    <img src="@(Navigation.BaseUri.TrimEnd('/') + Media.Url)" class="img-fluid" alt=""/>
                 }
                 else
                 {
@@ -47,7 +45,7 @@
                 @if (_show)
                 {
                     <video autoplay="autoplay" @onended="OnMediaEndedInternal" muted playsinline>
-                        <source src="@(BackendOptions.Value.BaseUrl + Media.Url)" type="video/webm"/>
+                        <source src="@(Navigation.BaseUri.TrimEnd('/') + Media.Url)" type="video/webm"/>
                     </video>
                 }
                 else

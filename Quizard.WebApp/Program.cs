@@ -22,7 +22,6 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
 
 builder.Services.Configure<RackIdOptions>(builder.Configuration.GetSection("RackIds"));
-builder.Services.Configure<BackendOptions>(builder.Configuration.GetSection("BackendOptions"));
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<ScenarioService>();
 builder.Services.AddScoped<HeaderService>();

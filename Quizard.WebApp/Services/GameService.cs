@@ -260,6 +260,8 @@ public class GameService
         }
     }
 
+    public int GivenAnswerTime { get; set; }
+
     private Answer? _givenAnswer;
     public Answer? GivenAnswer
     {

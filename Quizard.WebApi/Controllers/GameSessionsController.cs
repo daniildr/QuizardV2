@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using NUlid;
 using Quizard.Core.Entities;
-using Quizard.Core.Enums;
 using Quizard.Core.Interfaces;
 using Quizard.WebApi.Constants;
 using Quizard.WebApi.Controllers.BaseControllers;

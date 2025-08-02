@@ -132,14 +132,20 @@
 
 .question-hint-label {
     font-family: 'Tektur-Bold', sans-serif !important;
-    font-size: 40px;
-    color: #E8F9E2;
+    font-size: 36px !important;
+    color: #E8F9E2 !important;
 }
 
 .question-hint {
     font-family: 'Jura-Medium', sans-serif !important;
-    font-size: 40px;
-    color: #E8F9E2;
+    font-size: 26px !important;
+    color: #E8F9E2 !important;
+}
+
+.question-hint-small {
+    font-family: 'Jura-Medium', sans-serif !important;
+    font-size: 13px !important;
+    color: #E8F9E2 !important;
 }
 
 .system-button-label {

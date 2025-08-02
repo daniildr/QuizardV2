@@ -53,6 +53,74 @@ public class HelpController : BaseDbController
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public Task<IActionResult> GetWwwrootFolder() => Task.FromResult<IActionResult>(Ok(_env.WebRootPath));
 
+    /// <summary> Метод для получения справки по доступным типам игровых стадий </summary>
+    /// <returns> Справка </returns>
+    /// <response code="200"> Справка получена </response>
+    /// <response code="400"> Ошибка в параметрах запроса </response>
+    /// <response code="429"> Ошибка, если будет превышен лимит запросов </response>
+    /// <response code="500"> Ошибка сервера </response>
+    /// <response code="503"> Ошибка доступности сервисов </response>
+    [HttpGet("game-states"), MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public Task<IActionResult> GetGameState() =>
+        Task.FromResult<IActionResult>(Ok(Enum.GetValues<GameState>()
+            .ToDictionary(type => type.ToString(), type => (int) type)));
+
+    /// <summary> Метод для получения справки по доступным типам игровых триггеров </summary>
+    /// <returns> Справка </returns>
+    /// <response code="200"> Справка получена </response>
+    /// <response code="400"> Ошибка в параметрах запроса </response>
+    /// <response code="429"> Ошибка, если будет превышен лимит запросов </response>
+    /// <response code="500"> Ошибка сервера </response>
+    /// <response code="503"> Ошибка доступности сервисов </response>
+    [HttpGet("game-triggers"), MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public Task<IActionResult> GetGameTrigger() =>
+        Task.FromResult<IActionResult>(Ok(Enum.GetValues<GameTrigger>()
+            .ToDictionary(type => type.ToString(), type => (int) type)));
+
+    /// <summary> Метод для получения справки по доступным типам медиа </summary>
+    /// <returns> Справка </returns>
+    /// <response code="200"> Справка получена </response>
+    /// <response code="400"> Ошибка в параметрах запроса </response>
+    /// <response code="429"> Ошибка, если будет превышен лимит запросов </response>
+    /// <response code="500"> Ошибка сервера </response>
+    /// <response code="503"> Ошибка доступности сервисов </response>
+    [HttpGet("media-types"), MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public Task<IActionResult> GetMediaTypes() =>
+        Task.FromResult<IActionResult>(Ok(Enum.GetValues<MediaType>()
+            .ToDictionary(type => type.ToString(), type => (int) type)));
+
+    /// <summary> Метод для получения справки по доступным типам модификаторов (предметов) </summary>
+    /// <returns> Справка </returns>
+    /// <response code="200"> Справка получена </response>
+    /// <response code="400"> Ошибка в параметрах запроса </response>
+    /// <response code="429"> Ошибка, если будет превышен лимит запросов </response>
+    /// <response code="500"> Ошибка сервера </response>
+    /// <response code="503"> Ошибка доступности сервисов </response>
+    [HttpGet("modifier-types"), MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public Task<IActionResult> GetModifierTypes() =>
+        Task.FromResult<IActionResult>(Ok(Enum.GetValues<ModifierType>()
+            .ToDictionary(type => type.ToString(), type => (int) type)));
+
     /// <summary> Метод для получения справки по доступным типам рандов </summary>
     /// <returns> Справка </returns>
     /// <response code="200"> Справка получена </response>
@@ -71,20 +139,21 @@ public class HelpController : BaseDbController
                 Ok(await DbManager.RoundTypeRepository.GetAllRoundTypes().ConfigureAwait(false)))
             .ConfigureAwait(false);
 
-    /// <summary> Метод для получения справки по доступным типам медиа </summary>
+    /// <summary> Метод для получения справки по доступным типам стадий сценария </summary>
     /// <returns> Справка </returns>
     /// <response code="200"> Справка получена </response>
     /// <response code="400"> Ошибка в параметрах запроса </response>
-    /// <response code="429"> Ошибка, если будет превышен лимит запросов </response>
+    /// <response code="429"> Ошибка, если будет превышен лимит запросов</response>
     /// <response code="500"> Ошибка сервера </response>
     /// <response code="503"> Ошибка доступности сервисов </response>
-    [HttpGet("media-types"), MapToApiVersion("1.0")]
-    [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]
+    [HttpGet("scenario-stages"), MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(RoundType), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public Task<IActionResult> GetMediaTypes() =>
-        Task.FromResult<IActionResult>(Ok(Enum.GetValues<MediaType>()
-            .ToDictionary(type => type.ToString(), type => (int) type)));
+    public async Task<IActionResult> GetScenarioStages() =>
+        await HandleRequest(async () =>
+                Ok(await DbManager.RoundTypeRepository.GetAllRoundTypes().ConfigureAwait(false)))
+            .ConfigureAwait(false);
 }

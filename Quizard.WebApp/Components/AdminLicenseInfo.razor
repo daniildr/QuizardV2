@@ -1,10 +1,8 @@
 ﻿@using System.Net
-@using Microsoft.Extensions.Options
 @using Quizard.Core.Entities
-@using Quizard.WebApp.Options
 @inject HttpClient Http
+@inject NavigationManager Navigation
 @inject ILogger<AdminLicenseInfo> Logger
-@inject IOptions<BackendOptions> BackendOptions
 
 <div class="row m-2">
     <div class="col-6">
@@ -54,10 +52,10 @@
     
     private async Task GetLicenseStatus()
     {
-        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/status");
+        var response = await Http.GetAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/License/status");
         if (response.StatusCode != HttpStatusCode.Unauthorized)
         {
-            var licenseResponse = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License");
+            var licenseResponse = await Http.GetAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/License");
             var license = await licenseResponse.Content.ReadFromJsonAsync<License>();
             
 

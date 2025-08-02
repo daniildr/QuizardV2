@@ -1,10 +1,8 @@
 ﻿@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
 @using Quizard.SignalR
-@using Quizard.WebApp.Options
 @inject HttpClient Http
+@inject NavigationManager Navigation
 @inject ILogger<AdminSessionControl> Logger
-@inject IOptions<BackendOptions> BackendOptions
 
 <div class="row m-2">
     <div class="col-6">
@@ -84,7 +82,7 @@
         Logger.LogInformation("Вызываем метод завершения всех запущенных игр");
         try
         {
-            await Http.DeleteAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSessions/stopAll");
+            await Http.DeleteAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/GameSessions/stopAll");
 
         }
         catch (Exception ex)

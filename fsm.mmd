@@ -1,0 +1,70 @@
+stateDiagram-v2
+	state Decision1 <<choice>>
+	state Decision2 <<choice>>
+	state Decision3 <<choice>>
+	state Decision4 <<choice>>
+	state Decision5 <<choice>>
+	state Decision6 <<choice>>
+	state Decision7 <<choice>>
+	state Decision8 <<choice>>
+	state Decision9 <<choice>>
+	state Decision10 <<choice>>
+	state Decision11 <<choice>>
+	state Decision12 <<choice>>
+	state Decision13 <<choice>>
+	state Decision14 <<choice>>
+	state Decision15 <<choice>>
+	state Decision16 <<choice>>
+	state Decision17 <<choice>>
+	state Decision18 <<choice>>
+	state Decision19 <<choice>>
+	state Decision20 <<choice>>
+	state Decision21 <<choice>>
+	NotStarted --> WaitingForPlayers : StartRequested
+	Pause --> Finished : EndRequested
+	Pause --> Decision1 : ResumeRequested
+	WaitingForPlayers --> WaitingForPlayers : PlayerIdentified
+	WaitingForPlayers --> Decision2 : AllPlayersReady
+	WaitingForPlayers --> Decision3 : PauseRequested
+	Media --> Finished : EndRequested
+	Media --> Decision4 : Skip
+	Media --> Decision5 : MediaEnded
+	Media --> Decision6 : PauseRequested
+	RoundPlaying --> QuestionPlaying : Skip
+	RoundPlaying --> QuestionPlaying : RoundStarted
+	RoundPlaying --> Auction : AuctionStarted
+	RoundPlaying --> Finished : EndRequested
+	RoundPlaying --> Decision7 : PauseRequested
+	RoundPlaying --> RoundPlaying : ApplyTargetModifiersCompleted
+	QuestionPlaying --> RevealShowing : Skip
+	QuestionPlaying --> Finished : EndRequested
+	QuestionPlaying --> RevealShowing : RoundTimeout / Function
+	QuestionPlaying --> Decision8 : QuestionCompleted
+	QuestionPlaying --> Decision9 : PauseRequested
+	RevealShowing --> Finished : EndRequested
+	RevealShowing --> Decision10 : Skip
+	RevealShowing --> Decision11 : RevealShowed
+	RevealShowing --> Decision12 : PauseRequested
+	Auction --> Finished : EndRequested
+	Auction --> QuestionPlaying : AuctionCompleted
+	Auction --> Decision13 : PauseRequested
+	WaitStats --> ShowingStats : StatsRequested
+	WaitStats --> Finished : EndRequested
+	WaitStats --> Decision14 : PauseRequested
+	WaitStats --> WaitStats : RevealShowed
+	ShowingStats --> Finished : EndRequested
+	ShowingStats --> Decision15 : Skip
+	ShowingStats --> Decision16 : StatsDisplayed
+	ShowingStats --> Decision17 : PauseRequested
+	Voting --> Finished : EndRequested
+	Voting --> Decision18 : VotingCompleted
+	Voting --> Decision19 : PauseRequested
+	Shop --> ApplyingTargetModifiers : Skip
+	Shop --> ApplyingTargetModifiers : ShopEnded
+	Shop --> ApplyingTargetModifiers : ShopTimeout
+	Shop --> Finished : EndRequested
+	Shop --> Decision20 : PauseRequested
+	ApplyingTargetModifiers --> Finished : EndRequested
+	ApplyingTargetModifiers --> Decision21 : ApplyTargetModifiersCompleted
+	Finished --> ShowingScenarioStats : StatsRequested
+[*] --> NotStarted

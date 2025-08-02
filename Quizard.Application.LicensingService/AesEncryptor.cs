@@ -12,6 +12,11 @@ public class AesEncryptor : IAesEncryptor
     private readonly byte[] _key;
     private readonly ILogger<AesEncryptor> _logger;
 
+    /// <summary> Конструктор сервиса шифрования </summary>
+    /// <param name="config"> Провайдер конфигурации </param>
+    /// <param name="logger"> Логгер </param>
+    /// <exception cref="ArgumentNullException"> Ошибки получения ключа шифрования из конфигурации </exception>
+    /// <exception cref="ArgumentException"> Ошибки получения ключа шифрования из конфигурации </exception>
     public AesEncryptor(IConfiguration config, ILogger<AesEncryptor> logger)
     {
         _logger = logger;

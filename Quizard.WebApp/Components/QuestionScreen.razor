@@ -43,7 +43,7 @@ else
             @if (GameService.Question?.Hints.Count > 0)
             {
                 <div class="row position-relative">
-                    <div class="col-6 ps-5 pt-1 pe-5 text-center @_smallQuestionTextClass">
+                    <div class="col-6 ps-5 pe-5 text-center @_smallQuestionTextClass">
                         <p>@GameService.Question?.QuestionText</p>
                     </div>
                     <div class="col-6 ps-5 pe-5 text-center">
@@ -54,8 +54,8 @@ else
                         </div>
                         @foreach (var hint in Hint)
                         {
-                            <div class="row pt-1 pe-1">
-                                <div class="col question-hint @_smallQuestionTextClass">
+                            <div class="row">
+                                <div class="col @GetHintClass(hint.Text)">
                                     @hint.Text
                                 </div>
                             </div>
@@ -160,6 +160,10 @@ else
                 if (_remainingSeconds == _thirdTrigger)
                     UpdateHints(2);
             }
+            else if (GameService.Round!.RoundTypeId == RoundTypeId.GuessMelody)
+            {
+                GameService.GivenAnswerTime = _remainingSeconds;
+            }
             
             _remainingSeconds--;
             InvokeAsync(StateHasChanged);
@@ -183,5 +187,20 @@ else
         Hint.Add(hints[number]);
         
         InvokeAsync(StateHasChanged);
+    }
+
+    private string GetHintClass(string hint)
+    {
+        var hintClass = "";
+        if (hint.Length > 20)
+        {
+            hintClass += "question-hint-small";
+        }
+        else
+        {
+            hintClass += "question-hint";
+        }
+
+        return hintClass;
     }
 }

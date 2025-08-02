@@ -8,6 +8,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		GAME_START.md = GAME_START.md
 		LOGGING.md = LOGGING.md
 		SCENARIO.md = SCENARIO.md
+		fsm.mmd = fsm.mmd
+		FSM.md = FSM.md
+		SIGNALR.md = SIGNALR.md
+		GameHub.yaml = GameHub.yaml
+		CHECKLIST.md = CHECKLIST.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quizard.Core", "Quizard.Core\Quizard.Core.csproj", "{D20308E4-9F4A-4998-9BDB-522A171222F3}"

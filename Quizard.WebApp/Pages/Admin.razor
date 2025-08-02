@@ -1,7 +1,6 @@
 ﻿@page "/Admin"
 @using System.Net
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
 @using Newtonsoft.Json.Serialization
@@ -10,12 +9,11 @@
 @using Quizard.SignalR
 @using Quizard.WebApp.Services
 @using Quizard.WebApp.Components
-@using Quizard.WebApp.Options
 @layout MainLayout
 @inject HttpClient Http
 @inject ILogger<Admin> Logger
 @inject HeaderService HeaderSvc
-@inject IOptions<BackendOptions> BackendOptions
+@inject NavigationManager Navigation
 
 <AdminLicenseInfo/>
 <hr/>
@@ -72,7 +70,7 @@
     {
         Logger.LogInformation("Клиент будет работать в режиме панели администратора");
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .WithUrl($"{Navigation.BaseUri.TrimEnd('/')}/hubs/game")
             .AddNewtonsoftJsonProtocol(options =>
             {
                 options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
@@ -130,7 +128,7 @@
     
     private async Task<string> GetSessionStatus()
     {
-        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/status");
+        var response = await Http.GetAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/GameSession/status");
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             _gameSessionStatus = "The game session has not started yet.";
@@ -156,7 +154,7 @@
     {
         try
         {
-            var json = await Http.GetStringAsync($"{BackendOptions.Value.BaseUrl}/api/v1/Scenarios");
+            var json = await Http.GetStringAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/Scenarios");
             _scenarios = JsonConvert.DeserializeObject<Scenario[]>(json);
             _apiConnectionClass = "border-success";
         }
@@ -171,7 +169,7 @@
     {
         try
         {
-            var wwwrootFolderPath = await Http.GetStringAsync($"{BackendOptions.Value.BaseUrl}/api/v1/Help/wwwroot-folder");
+            var wwwrootFolderPath = await Http.GetStringAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/Help/wwwroot-folder");
             _wwwrootFolder = wwwrootFolderPath;
             _apiConnectionClass = "border-success";
         }

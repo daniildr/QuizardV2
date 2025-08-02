@@ -1,7 +1,6 @@
 ﻿@page "/Player/{rackName}"
 @using System.Net
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Serialization
 @using Quizard.Core.Entities
@@ -9,14 +8,12 @@
 @using Quizard.Core.Models.Responses
 @using Quizard.SignalR
 @using Quizard.WebApp.Components
-@using Quizard.WebApp.Options
 @using Quizard.WebApp.Services
 @layout BlankLayout
 @inject HttpClient HttpClient
 @inject ILogger<Player> Logger
 @inject GameService GameService
 @inject NavigationManager NavManager
-@inject IOptions<BackendOptions> BackendOptions
 
 <div class="container-fluid player-body @GetModifierStyle()">
     <PlayerHeaderComponent/>
@@ -35,7 +32,7 @@
 
         Logger.LogTrace("Выполняется подключение к хабу");
         GameService.HubConnection = new HubConnectionBuilder()
-            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .WithUrl($"{NavManager.BaseUri.TrimEnd('/')}/hubs/game")
             .AddNewtonsoftJsonProtocol(options =>
             {
                 options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
@@ -52,7 +49,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        var response = await HttpClient.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/status");
+        var response = await HttpClient.GetAsync($"{NavManager.BaseUri.TrimEnd('/')}/api/v1/GameSession/status");
         if (response.StatusCode == HttpStatusCode.NotFound)
             return;
 
@@ -97,6 +94,26 @@
                                             break;
 
                                         case RoundTypeId.GuessMelody:
+                                        {
+                                            if (GameService.Nickname == GameService.SpeedWinnerNickname)
+                                                GameService.CurrentRoundScore +=
+                                                    GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier;
+                                            else
+                                            {
+                                                var trigger = GameService.Question.QuestionTimeout / 3;
+                                                
+                                                if (GameService.GivenAnswerTime <= trigger)
+                                                    GameService.CurrentRoundScore += GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier * 3 / 10;
+                                                else if (GameService.GivenAnswerTime <= trigger * 2)
+                                                    GameService.CurrentRoundScore += GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier * 6 / 10;
+                                                else
+                                                    GameService.CurrentRoundScore += GameService.Scenario!.BasePointPrice * GameService.Round!.CorrectMultiplier * 9 / 10;
+                                            }
+
+                                            GameService.SpeedWinnerNickname = null;
+                                        }
+                                            break;
+                                            
                                         case RoundTypeId.Blitz:
                                         {
                                             if (GameService.Nickname == GameService.SpeedWinnerNickname)

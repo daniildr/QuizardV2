@@ -1,10 +1,8 @@
-﻿@using Microsoft.Extensions.Options
-@using Quizard.Core.Entities
+﻿@using Quizard.Core.Entities
 @using Quizard.Core.Models.Responses
-@using Quizard.WebApp.Options
 @inject HttpClient Http
+@inject NavigationManager Navigation
 @inject ILogger<AdminAccordionLicense> Logger
-@inject IOptions<BackendOptions> BackendOptions
 
 <div class="accordion-item">
     <h2 class="accordion-header">
@@ -54,7 +52,7 @@
     
     private async Task GetSalt()
     {
-        var response = await Http.GetAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/salt");
+        var response = await Http.GetAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/License/salt");
         _salt = await response.Content.ReadAsStringAsync();
 
         await InvokeAsync(StateHasChanged);
@@ -70,7 +68,7 @@
             };
             
             var created = (await Http
-                    .PostAsJsonAsync($"{BackendOptions.Value.BaseUrl}/api/v1/License/upload", uploadLicenseDto)).Content
+                    .PostAsJsonAsync($"{Navigation.BaseUri.TrimEnd('/')}/api/v1/License/upload", uploadLicenseDto)).Content
                 .ReadFromJsonAsync<License>();
 
             var result = $"License activated: ID = {created.Id}";

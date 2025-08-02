@@ -1,9 +1,7 @@
-﻿@using Microsoft.Extensions.Options
-@using Quizard.WebApp.Options
-@using Quizard.WebApp.Services
+﻿@using Quizard.WebApp.Services
 @inject ILogger<Placeholder> Logger
+@inject NavigationManager Navigation
 @inject ScenarioService ScenarioService
-@inject IOptions<BackendOptions> BackendOptions
 
 @if (FinishPlaceholder)
 {
@@ -44,9 +42,9 @@ else
     {
         PlaceholderUrl = ScenarioService.Scenario is null 
             ? "assets/default-placeholder.png" 
-            : $"{BackendOptions.Value.BaseUrl}{ScenarioService.Scenario.Placeholder}";
+            : $"{Navigation.BaseUri.TrimEnd('/')}{ScenarioService.Scenario.Placeholder}";
         
         if (ScenarioService.Scenario is null) return;
-        FinishPlaceholderUrl = $"{BackendOptions.Value.BaseUrl}{ScenarioService.Scenario.FinishPlaceholder}";
+        FinishPlaceholderUrl = $"{Navigation.BaseUri.TrimEnd('/')}{ScenarioService.Scenario.FinishPlaceholder}";
     }
 }

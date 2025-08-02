@@ -1,8 +1,6 @@
 ﻿@using System.Text
-@using Microsoft.Extensions.Options
-@using Quizard.WebApp.Options
 @inject HttpClient Http
-@inject IOptions<BackendOptions> BackendOptions
+@inject NavigationManager Navigation
 
 <div class="accordion-item">
     <h2 class="accordion-header">
@@ -58,7 +56,7 @@
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{BackendOptions.Value.BaseUrl}/api/v1/Upload");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Navigation.BaseUri.TrimEnd('/')}/api/v1/Upload");
             request.Content = new StringContent(_scenarioJson, Encoding.UTF8, "application/json");
             
             using var response = await Http.SendAsync(request);

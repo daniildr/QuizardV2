@@ -1,10 +1,8 @@
-﻿@using Microsoft.Extensions.Options
-@using Quizard.Core.Entities
+﻿@using Quizard.Core.Entities
 @using Quizard.Core.Models.Requests
 @using Quizard.Core.Models.Responses
-@using Quizard.WebApp.Options
 @inject HttpClient Http
-@inject IOptions<BackendOptions> BackendOptions
+@inject NavigationManager Navigation
 
 <div class="accordion-item">
             <h2 class="accordion-header">
@@ -178,7 +176,7 @@
         try
         {
             var response = await Http.PostAsJsonAsync(
-                $"{BackendOptions.Value.BaseUrl}/api/v1/GameSession/start", request);
+                $"{Navigation.BaseUri.TrimEnd('/')}/api/v1/GameSession/start", request);
 
             switch ((int)response.StatusCode)
             {

@@ -1,19 +1,16 @@
 ﻿@page "/Informer"
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Options
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Serialization
 @using Quizard.Core.Entities
 @using Quizard.Core.Enums
 @using Quizard.SignalR
 @using Quizard.WebApp.Components
-@using Quizard.WebApp.Options
 @using Quizard.WebApp.Services
 @layout BlankLayout
 @inject ILogger<Informer> Logger
 @inject NavigationManager NavManager
 @inject ScenarioService ScenarioService
-@inject IOptions<BackendOptions> BackendOptions
 
 <div class="@_mirrorClass">
     @switch (_state)
@@ -83,7 +80,7 @@
 
         Logger.LogTrace("Выполняется подключение к хабу");
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{BackendOptions.Value.BaseUrl}/hubs/game")
+            .WithUrl($"{NavManager.BaseUri.TrimEnd('/')}/hubs/game")
             .AddNewtonsoftJsonProtocol(options =>
             {
                 options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver

@@ -97,16 +97,16 @@
             break;
 
         case GameState.ApplyingTargetModifiers:
-            @* @if (GameService.Bag.Contains(ModifierType.Mine) || GameService.Bag.Contains(ModifierType.ShuffleButtons)) *@
-            @* { *@
-            @*     <TargetModifiersScreen/> *@
-            @* } *@
-            @* else *@
-            @* { *@
-            @*     <div class="col p-3 text-center d-flex align-items-center justify-content-center"> *@
-            @*         <h6>Ожидание остальных игроков</h6> *@
-            @*     </div> *@
-            @* } *@
+            @if (GameService.Bag.Contains(ModifierType.Mine) || GameService.Bag.Contains(ModifierType.ShuffleButtons))
+            {
+                <TargetModifiersScreen/>
+            }
+            else
+            {
+                <div class="col p-3 text-center d-flex align-items-center justify-content-center">
+                    <h6>Ожидание остальных игроков</h6>
+                </div>
+            }
             break;
 
         case GameState.RevealShowing:

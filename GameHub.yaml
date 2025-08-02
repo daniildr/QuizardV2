@@ -1,0 +1,606 @@
+asyncapi: 3.0.0
+info:
+  title: GameHub API
+  version: 1.0.0
+  description: AsyncAPI documentation for the GameHub SignalR Hub.
+  license:
+    name: Quizard
+defaultContentType: application/json
+servers:
+  production:
+    host: your-host-ip
+    protocol: websocket
+    description: Production WebSocket server for SignalR Hub
+channels:
+  IdentifyPlayer:
+    address: IdentifyPlayer
+    messages:
+      identifyPlayer.message:
+        name: IdentifyPlayerMessage
+        payload:
+          type: object
+          properties:
+            nickname:
+              type: string
+              description: Никнейм игрока
+            rackId:
+              type: string
+              description: Уникальный идентификатор игровой стойки
+  IdentifyInformer:
+    address: IdentifyInformer
+    messages:
+      identifyInformer.message:
+        name: IdentifyInformerMessage
+        payload:
+          type: object
+  IdentifyAdmin:
+    address: IdentifyAdmin
+    messages:
+      identifyAdmin.message:
+        name: IdentifyAdminMessage
+        payload:
+          type: object
+  PauseGame:
+    address: PauseGame
+    messages:
+      pauseGame.message:
+        name: PauseGameMessage
+        payload:
+          type: object
+  ResumeGame:
+    address: ResumeGame
+    messages:
+      resumeGame.message:
+        name: ResumeGameMessage
+        payload:
+          type: object
+  SkipStage:
+    address: SkipStage
+    messages:
+      skipStage.message:
+        name: SkipStageMessage
+        payload:
+          type: object
+  StopGame:
+    address: StopGame
+    messages:
+      stopGame.message:
+        name: StopGameMessage
+        payload:
+          type: object
+  GetCurrentScenario:
+    address: GetCurrentScenario
+    messages:
+      getCurrentScenario.message:
+        name: GetCurrentScenarioMessage
+        payload:
+          type: object
+  GetPlayerList:
+    address: GetPlayerList
+    messages:
+      getPlayerList.message:
+        name: GetPlayerListMessage
+        payload:
+          type: object
+  MediaEnded:
+    address: MediaEnded
+    messages:
+      mediaEnded.message:
+        name: MediaEndedMessage
+        payload:
+          type: object
+  AnswerQuestion:
+    address: AnswerQuestion
+    messages:
+      answerQuestion.message:
+        name: AnswerQuestionMessage
+        payload:
+          type: object
+          properties:
+            isCorrect:
+              type: boolean
+              description: Флаг правильного ответа
+  FastestAnswer:
+    address: FastestAnswer
+    messages:
+      fastestAnswer.message:
+        name: FastestAnswerMessage
+        payload:
+          type: object
+          properties:
+            isCorrect:
+              type: boolean
+              description: Флаг правильного ответа
+            timestamp:
+              type: integer
+              format: int64
+              description: Метка времени ответа
+  RevealShowed:
+    address: RevealShowed
+    messages:
+      revealShowed.message:
+        name: RevealShowedMessage
+        payload:
+          type: object
+  SendStatistics:
+    address: SendStatistics
+    messages:
+      sendStatistics.message:
+        name: SendStatisticsMessage
+        payload:
+          type: object
+          properties:
+            score:
+              type: integer
+              description: Набранные очки
+  SendScenarioStatistics:
+    address: SendScenarioStatistics
+    messages:
+      sendScenarioStatistics.message:
+        name: SendScenarioStatisticsMessage
+        payload:
+          type: object
+          properties:
+            score:
+              type: integer
+              description: Набранные очки
+  StatsDisplayed:
+    address: StatsDisplayed
+    messages:
+      statsDisplayed.message:
+        name: StatsDisplayedMessage
+        payload:
+          type: object
+  PlayerMakeBet:
+    address: PlayerMakeBet
+    messages:
+      playerMakeBet.message:
+        name: PlayerMakeBetMessage
+        payload:
+          type: object
+  SubmitPlayerVoteChoice:
+    address: SubmitPlayerVoteChoice
+    messages:
+      submitPlayerVoteChoice.message:
+        name: SubmitPlayerVoteChoiceMessage
+        payload:
+          type: object
+          properties:
+            roundId:
+              type: string
+              description: ID выбранного раунда
+            votes:
+              type: integer
+              description: Количество голосов
+  PlayerMakePurchase:
+    address: PlayerMakePurchase
+    messages:
+      playerMakePurchase.message:
+        name: PlayerMakePurchaseMessage
+        payload:
+          type: object
+          properties:
+            modifier:
+              $ref: '#/components/schemas/ModifierType'
+  PlayerHasCompletedPurchases:
+    address: PlayerHasCompletedPurchases
+    messages:
+      playerHasCompletedPurchases.message:
+        name: PlayerHasCompletedPurchasesMessage
+        payload:
+          type: object
+  SubmitMineModifierTarget:
+    address: SubmitMineModifierTarget
+    messages:
+      submitMineModifierTarget.message:
+        name: SubmitMineModifierTargetMessage
+        payload:
+          type: object
+          properties:
+            nickname:
+              type: string
+              description: Никнейм целевого игрока
+  MineExploded:
+    address: MineExploded
+    messages:
+      mineExploded.message:
+        name: MineExplodedMessage
+        payload:
+          type: object
+  MirroredModifierProtected:
+    address: MirroredModifierProtected
+    messages:
+      mirroredModifierProtected.message:
+        name: MirroredModifierProtectedMessage
+        payload:
+          type: object
+  SubmitShakerModifierUsed:
+    address: SubmitShakerModifierUsed
+    messages:
+      submitShakerModifierUsed.message:
+        name: SubmitShakerModifierUsedMessage
+        payload:
+          type: object
+          properties:
+            nickname:
+              type: string
+              description: Никнейм целевого игрока
+  SubmitNotTargetModifier:
+    address: SubmitNotTargetModifier
+    messages:
+      submitNotTargetModifier.message:
+        name: SubmitNotTargetModifierMessage
+        payload:
+          type: object
+          properties:
+            modifier:
+              $ref: '#/components/schemas/ModifierType'
+  PlayerHasCompletedApplicationTargetModifier:
+    address: PlayerHasCompletedApplicationTargetModifier
+    messages:
+      playerHasCompletedApplicationTargetModifier.message:
+        name: PlayerHasCompletedApplicationTargetModifierMessage
+        payload:
+          type: object
+  SendGameScenario:
+    address: SendGameScenario
+    messages:
+      sendGameScenario.message:
+        name: SendGameScenarioMessage
+        payload:
+          $ref: '#/components/schemas/GameScenario'
+  ReceivePlayerList:
+    address: ReceivePlayerList
+    messages:
+      receivePlayerList.message:
+        name: ReceivePlayerListMessage
+        payload:
+          type: array
+          items:
+            type: string
+            description: Никнеймы игроков
+  IdentifyInformerNotice:
+    address: IdentifyInformerNotice
+    messages:
+      identifyInformerNotice.message:
+        name: IdentifyInformerNoticeMessage
+        payload:
+          type: object
+  IdentifyAdminNotice:
+    address: IdentifyAdminNotice
+    messages:
+      identifyAdminNotice.message:
+        name: IdentifyAdminNoticeMessage
+        payload:
+          type: object
+  InteractiveQuestionResults:
+    address: InteractiveQuestionResults
+    messages:
+      interactiveQuestionResults.message:
+        name: InteractiveQuestionResultsMessage
+        payload:
+          type: object
+          properties:
+            responderPoints:
+              type: integer
+              description: Очки ответившего игрока
+  ShopResults:
+    address: ShopResults
+    messages:
+      shopResults.message:
+        name: ShopResultsMessage
+        payload:
+          type: object
+          properties:
+            purchasedResult:
+              type: boolean
+              description: Успешность покупки
+  ShopUpdated:
+    address: ShopUpdated
+    messages:
+      shopUpdated.message:
+        name: ShopUpdatedMessage
+        payload:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShopStock'
+  ApplyNotTargetModifier:
+    address: ApplyNotTargetModifier
+    messages:
+      applyNotTargetModifier.message:
+        name: ApplyNotTargetModifierMessage
+        payload:
+          $ref: '#/components/schemas/ModifierType'
+operations:
+  identifyPlayer:
+    action: receive
+    channel:
+      $ref: '#/channels/IdentifyPlayer'
+    summary: Идентификация клиента-игрока
+    messages:
+      - $ref: '#/channels/IdentifyPlayer/messages/identifyPlayer.message'
+  identifyInformer:
+    action: receive
+    channel:
+      $ref: '#/channels/IdentifyInformer'
+    summary: Идентификация клиента-информатора
+    messages:
+      - $ref: '#/channels/IdentifyInformer/messages/identifyInformer.message'
+  identifyAdmin:
+    action: receive
+    channel:
+      $ref: '#/channels/IdentifyAdmin'
+    summary: Идентификация клиента-админа
+    messages:
+      - $ref: '#/channels/IdentifyAdmin/messages/identifyAdmin.message'
+  pauseGame:
+    action: receive
+    channel:
+      $ref: '#/channels/PauseGame'
+    summary: Приостановка игровой сессии
+    messages:
+      - $ref: '#/channels/PauseGame/messages/pauseGame.message'
+  resumeGame:
+    action: receive
+    channel:
+      $ref: '#/channels/ResumeGame'
+    summary: Возобновление игровой сессии
+    messages:
+      - $ref: '#/channels/ResumeGame/messages/resumeGame.message'
+  skipStage:
+    action: receive
+    channel:
+      $ref: '#/channels/SkipStage'
+    summary: Пропуск текущего этапа
+    messages:
+      - $ref: '#/channels/SkipStage/messages/skipStage.message'
+  stopGame:
+    action: receive
+    channel:
+      $ref: '#/channels/StopGame'
+    summary: Принудительная остановка игры
+    messages:
+      - $ref: '#/channels/StopGame/messages/stopGame.message'
+  getCurrentScenario:
+    action: receive
+    channel:
+      $ref: '#/channels/GetCurrentScenario'
+    summary: Получение текущего сценария
+    messages:
+      - $ref: '#/channels/GetCurrentScenario/messages/getCurrentScenario.message'
+  getPlayerList:
+    action: receive
+    channel:
+      $ref: '#/channels/GetPlayerList'
+    summary: Получение списка игроков
+    messages:
+      - $ref: '#/channels/GetPlayerList/messages/getPlayerList.message'
+  mediaEnded:
+    action: receive
+    channel:
+      $ref: '#/channels/MediaEnded'
+    summary: Завершение показа медиа
+    messages:
+      - $ref: '#/channels/MediaEnded/messages/mediaEnded.message'
+  answerQuestion:
+    action: receive
+    channel:
+      $ref: '#/channels/AnswerQuestion'
+    summary: Ответ игрока на вопрос
+    messages:
+      - $ref: '#/channels/AnswerQuestion/messages/answerQuestion.message'
+  fastestAnswer:
+    action: receive
+    channel:
+      $ref: '#/channels/FastestAnswer'
+    summary: Ответ игрока на скоростной вопрос
+    messages:
+      - $ref: '#/channels/FastestAnswer/messages/fastestAnswer.message'
+  revealShowed:
+    action: receive
+    channel:
+      $ref: '#/channels/RevealShowed'
+    summary: Показ правильного ответа
+    messages:
+      - $ref: '#/channels/RevealShowed/messages/revealShowed.message'
+  sendStatistics:
+    action: receive
+    channel:
+      $ref: '#/channels/SendStatistics'
+    summary: Отправка статистики раунда
+    messages:
+      - $ref: '#/channels/SendStatistics/messages/sendStatistics.message'
+  sendScenarioStatistics:
+    action: receive
+    channel:
+      $ref: '#/channels/SendScenarioStatistics'
+    summary: Отправка статистики сценария
+    messages:
+      - $ref: >-
+          #/channels/SendScenarioStatistics/messages/sendScenarioStatistics.message
+  statsDisplayed:
+    action: receive
+    channel:
+      $ref: '#/channels/StatsDisplayed'
+    summary: Завершение просмотра статистики
+    messages:
+      - $ref: '#/channels/StatsDisplayed/messages/statsDisplayed.message'
+  playerMakeBet:
+    action: receive
+    channel:
+      $ref: '#/channels/PlayerMakeBet'
+    summary: Ставка игрока на аукционе
+    messages:
+      - $ref: '#/channels/PlayerMakeBet/messages/playerMakeBet.message'
+  submitPlayerVoteChoice:
+    action: receive
+    channel:
+      $ref: '#/channels/SubmitPlayerVoteChoice'
+    summary: Голосование игрока
+    messages:
+      - $ref: >-
+          #/channels/SubmitPlayerVoteChoice/messages/submitPlayerVoteChoice.message
+  playerMakePurchase:
+    action: receive
+    channel:
+      $ref: '#/channels/PlayerMakePurchase'
+    summary: Покупка модификатора игроком
+    messages:
+      - $ref: '#/channels/PlayerMakePurchase/messages/playerMakePurchase.message'
+  playerHasCompletedPurchases:
+    action: receive
+    channel:
+      $ref: '#/channels/PlayerHasCompletedPurchases'
+    summary: Завершение покупок игроком
+    messages:
+      - $ref: >-
+          #/channels/PlayerHasCompletedPurchases/messages/playerHasCompletedPurchases.message
+  submitMineModifierTarget:
+    action: receive
+    channel:
+      $ref: '#/channels/SubmitMineModifierTarget'
+    summary: Применение мины к игроку
+    messages:
+      - $ref: >-
+          #/channels/SubmitMineModifierTarget/messages/submitMineModifierTarget.message
+  mineExploded:
+    action: receive
+    channel:
+      $ref: '#/channels/MineExploded'
+    summary: Взрыв мины
+    messages:
+      - $ref: '#/channels/MineExploded/messages/mineExploded.message'
+  mirroredModifierProtected:
+    action: receive
+    channel:
+      $ref: '#/channels/MirroredModifierProtected'
+    summary: Применение зеркальной ловушки
+    messages:
+      - $ref: >-
+          #/channels/MirroredModifierProtected/messages/mirroredModifierProtected.message
+  submitShakerModifierUsed:
+    action: receive
+    channel:
+      $ref: '#/channels/SubmitShakerModifierUsed'
+    summary: Применение перемешивания кнопок
+    messages:
+      - $ref: >-
+          #/channels/SubmitShakerModifierUsed/messages/submitShakerModifierUsed.message
+  submitNotTargetModifier:
+    action: receive
+    channel:
+      $ref: '#/channels/SubmitNotTargetModifier'
+    summary: Применение общего модификатора
+    messages:
+      - $ref: >-
+          #/channels/SubmitNotTargetModifier/messages/submitNotTargetModifier.message
+  playerHasCompletedApplicationTargetModifier:
+    action: receive
+    channel:
+      $ref: '#/channels/PlayerHasCompletedApplicationTargetModifier'
+    summary: Завершение применения модификаторов
+    messages:
+      - $ref: >-
+          #/channels/PlayerHasCompletedApplicationTargetModifier/messages/playerHasCompletedApplicationTargetModifier.message
+  sendGameScenario:
+    action: send
+    channel:
+      $ref: '#/channels/SendGameScenario'
+    summary: Отправка игрового сценария клиенту
+    messages:
+      - $ref: '#/channels/SendGameScenario/messages/sendGameScenario.message'
+  receivePlayerList:
+    action: send
+    channel:
+      $ref: '#/channels/ReceivePlayerList'
+    summary: Получение списка игроков клиентом
+    messages:
+      - $ref: '#/channels/ReceivePlayerList/messages/receivePlayerList.message'
+  identifyInformerNotice:
+    action: send
+    channel:
+      $ref: '#/channels/IdentifyInformerNotice'
+    summary: Уведомление об идентификации информатора
+    messages:
+      - $ref: >-
+          #/channels/IdentifyInformerNotice/messages/identifyInformerNotice.message
+  identifyAdminNotice:
+    action: send
+    channel:
+      $ref: '#/channels/IdentifyAdminNotice'
+    summary: Уведомление об идентификации админа
+    messages:
+      - $ref: '#/channels/IdentifyAdminNotice/messages/identifyAdminNotice.message'
+  interactiveQuestionResults:
+    action: send
+    channel:
+      $ref: '#/channels/InteractiveQuestionResults'
+    summary: Результаты интерактивного вопроса
+    messages:
+      - $ref: >-
+          #/channels/InteractiveQuestionResults/messages/interactiveQuestionResults.message
+  shopResults:
+    action: send
+    channel:
+      $ref: '#/channels/ShopResults'
+    summary: Результаты покупки в магазине
+    messages:
+      - $ref: '#/channels/ShopResults/messages/shopResults.message'
+  shopUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/ShopUpdated'
+    summary: Обновление остатков магазина
+    messages:
+      - $ref: '#/channels/ShopUpdated/messages/shopUpdated.message'
+  applyNotTargetModifier:
+    action: send
+    channel:
+      $ref: '#/channels/ApplyNotTargetModifier'
+    summary: Применение общего модификатора
+    messages:
+      - $ref: >-
+          #/channels/ApplyNotTargetModifier/messages/applyNotTargetModifier.message
+components:
+  schemas:
+    GameScenario:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор сценария
+        roundDefinitions:
+          type: array
+          items:
+            type: object
+            properties:
+              roundId:
+                type: string
+              roundTypeId:
+                type: string
+        shopStocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShopStock'
+      description: Объект игрового сценария
+    ShopStock:
+      type: object
+      properties:
+        modifierType:
+          $ref: '#/components/schemas/ModifierType'
+        quantity:
+          type: integer
+          description: Количество доступных модификаторов
+      description: Остатки магазина
+    ModifierType:
+      type: string
+      enum:
+        - ShuffleButtons
+        - ExtraVotes
+        - Mine
+        - GoldRound
+        - MistakePass
+        - MirrorTrap
+        - ReduceTextSize
+        - BrightInterface
+      description: Тип модификатора
